@@ -3,7 +3,7 @@ package htl.steyr.slots;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 
-public class HelloController {
+public class Game_Controller {
     @FXML
     private Label welcomeText;
 
