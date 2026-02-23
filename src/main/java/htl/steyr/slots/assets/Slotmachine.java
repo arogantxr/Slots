@@ -42,4 +42,8 @@ public class Slotmachine {
         return symbols.remove(symbol);
     }
 
+    public int getReels() {
+        return reels;
+    }
+
 }
