@@ -35,4 +35,11 @@ public class Slotmachine {
         symbols.add(symbol);
     }
 
+    public boolean removeSymbol(String symbol) {
+        if (symbols.size() <= 1) {
+            throw new IllegalStateException("At least one symbol must remain.");
+        }
+        return symbols.remove(symbol);
+    }
+
 }
