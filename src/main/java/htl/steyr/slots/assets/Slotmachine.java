@@ -46,4 +46,11 @@ public class Slotmachine {
         return reels;
     }
 
+    public void setReels(int reels) {
+        if (reels <= 0) {
+            throw new IllegalArgumentException("Reels must be greater than 0.");
+        }
+        this.reels = reels;
+    }
+
 }
