@@ -1,6 +1,7 @@
 package htl.steyr.slots.assets;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Slotmachine {
@@ -21,6 +22,10 @@ public class Slotmachine {
 
     public Slotmachine() {
         this(List.of("Cherry", "Lemon", "Orange", "Bell", "Seven"), 3);
+    }
+
+    public List<String> getSymbols() {
+        return Collections.unmodifiableList(symbols);
     }
 
 }
