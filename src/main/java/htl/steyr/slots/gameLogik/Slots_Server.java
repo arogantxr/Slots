@@ -10,9 +10,9 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class Slots_Server {
     private final ServerSocket server;
-    private final boolean running;
+    private boolean running;
     private final List<Connection_Handling> clients = Collections.synchronizedList(new ArrayList<>());
-
+    private Thread acceptnewConnections;
 
     public Slots_Server() throws IOException {
         server = new ServerSocket(12345);
@@ -26,7 +26,7 @@ public class Slots_Server {
 
     public void acceptConnections(){
 
-        Thread acceptnewConnections = new Thread(() -> {
+        acceptnewConnections = new Thread(() -> {
             while (running) {
                 try (Socket newconnection = server.accept()) {
 
@@ -44,15 +44,10 @@ public class Slots_Server {
     }
 
 
-
-    public List getSlotSymbols(){
-        List symbols = new ArrayList();
-
-        for(int i=0;i<4;++i){
-            int rand = ThreadLocalRandom.current().nextInt(4);
-            symbols.add(rand+1);
-        }
-        return symbols;
+    public void stop() throws IOException {
+        running = false;
+        if(acceptnewConnections != null) acceptnewConnections.interrupt();
+        server.close();
     }
 
     static void main() {
@@ -63,10 +58,7 @@ public class Slots_Server {
         try {
             Slots_Server newserver = new Slots_Server(portposition);
             newserver.acceptConnections();
-            System.out.println("Player1: "+ newserver.getSlotSymbols());
-            System.out.println("Player2: "+ newserver.getSlotSymbols());
-            System.out.println("Player3: "+ newserver.getSlotSymbols());
-            System.out.println("Player4: "+ newserver.getSlotSymbols());
+
             System.out.println("Server is running on Port: "+portposition);
         } catch(IOException e){
             e.printStackTrace();
