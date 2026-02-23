@@ -28,4 +28,11 @@ public class Slotmachine {
         return Collections.unmodifiableList(symbols);
     }
 
+    public void addSymbol(String symbol) {
+        if (symbol == null || symbol.isBlank()) {
+            throw new IllegalArgumentException("Symbol must not be null or blank.");
+        }
+        symbols.add(symbol);
+    }
+
 }
