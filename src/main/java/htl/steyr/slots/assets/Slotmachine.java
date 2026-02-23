@@ -3,6 +3,7 @@ package htl.steyr.slots.assets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class Slotmachine {
     private final List<String> symbols;
@@ -51,6 +52,15 @@ public class Slotmachine {
             throw new IllegalArgumentException("Reels must be greater than 0.");
         }
         this.reels = reels;
+    }
+
+    public List<String> spin() {
+        List<String> result = new ArrayList<>(reels);
+        for (int i = 0; i < reels; i++) {
+            int randomIndex = ThreadLocalRandom.current().nextInt(symbols.size());
+            result.add(symbols.get(randomIndex));
+        }
+        return result;
     }
 
 }
