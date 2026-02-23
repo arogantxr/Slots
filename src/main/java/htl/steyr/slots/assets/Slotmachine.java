@@ -19,4 +19,8 @@ public class Slotmachine {
         this.reels = reels;
     }
 
+    public Slotmachine() {
+        this(List.of("Cherry", "Lemon", "Orange", "Bell", "Seven"), 3);
+    }
+
 }
