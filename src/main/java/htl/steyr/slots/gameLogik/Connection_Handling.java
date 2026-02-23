@@ -20,4 +20,19 @@ public class Connection_Handling {
 
         running = true;
     }
+
+
+    public void acceptnewConnections(){
+        Thread receiveThread = new Thread(() -> {
+            while(running) {
+                while(in.hasNextLine()) {
+                    String message = in.nextLine();
+
+                    System.out.println("Received: "+ message);
+                }
+            }
+        });
+
+        receiveThread.start();
+    }
 }
