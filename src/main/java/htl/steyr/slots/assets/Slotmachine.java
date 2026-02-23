@@ -22,7 +22,7 @@ public class Slotmachine {
     }
 
     public Slotmachine() {
-        this(List.of("Cherry", "Lemon", "Orange", "Bell", "Seven"), 3);
+        this(List.of("Hearts", "Diamonds", "Clubs", "Spades"), 3);
     }
 
     public List<String> getSymbols() {
