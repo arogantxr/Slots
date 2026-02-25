@@ -5,7 +5,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
 
-public class Connection_Handling {
+public class ServerConnection {
     private final Socket socket;
     private final Scanner in;
     private final PrintWriter out;
@@ -13,7 +13,7 @@ public class Connection_Handling {
     private volatile boolean running;
     private Thread receiveThread;
 
-    public Connection_Handling(Socket newconnection) throws IOException {
+    public ServerConnection(Socket newconnection) throws IOException {
         this.socket = newconnection;
 
         this.in = new Scanner(newconnection.getInputStream());

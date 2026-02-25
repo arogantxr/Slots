@@ -6,18 +6,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class Slots_Server {
+public class GameServer {
     private final ServerSocket server;
     private boolean running;
-    private final List<Connection_Handling> clients = Collections.synchronizedList(new ArrayList<>());
+    private final List<ServerConnection> clients = Collections.synchronizedList(new ArrayList<>());
     private Thread acceptnewConnections;
 
-    public Slots_Server() throws IOException {
+    public GameServer() throws IOException {
         server = new ServerSocket(12345);
         running = true;
     }
 
-    public Slots_Server(int port) throws IOException {
+    public GameServer(int port) throws IOException {
         server = new ServerSocket(port);
         running = true;
     }
@@ -27,7 +27,7 @@ public class Slots_Server {
         acceptnewConnections = new Thread(() -> {
             while (running) {
                 try {
-                    Connection_Handling cl = new Connection_Handling(server.accept());
+                    ServerConnection cl = new ServerConnection(server.accept());
                     clients.add(cl);
                     cl.acceptnewConnections();
                 } catch (IOException e) {
@@ -46,7 +46,7 @@ public class Slots_Server {
         running = false;
         if (acceptnewConnections != null) acceptnewConnections.interrupt();
         synchronized (clients) {
-            for (Connection_Handling client : clients) {
+            for (ServerConnection client : clients) {
                 client.close();
             }
         }
@@ -59,7 +59,7 @@ public class Slots_Server {
         int portposition = 55555;
 
         try {
-            Slots_Server newserver = new Slots_Server(portposition);
+            GameServer newserver = new GameServer(portposition);
             newserver.acceptConnections();
 
             System.out.println("Server is running on Port: " + portposition);
