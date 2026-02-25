@@ -10,7 +10,8 @@ public class Connection_Handling {
     private final Scanner in;
     private final PrintWriter out;
 
-    private final boolean running;
+    private volatile boolean running;
+    private Thread receiveThread;
 
     public Connection_Handling(Socket newconnection) throws IOException {
         this.socket = newconnection;
@@ -23,16 +24,32 @@ public class Connection_Handling {
 
 
     public void acceptnewConnections(){
-        Thread receiveThread = new Thread(() -> {
-            while(running) {
-                while(in.hasNextLine()) {
-                    String message = in.nextLine();
+        if (receiveThread != null && receiveThread.isAlive()) {
+            return;
+        }
 
-                    System.out.println("Received: "+ message);
+        receiveThread = new Thread(() -> {
+            try {
+                while (running && !socket.isClosed() && in.hasNextLine()) {
+                    String message = in.nextLine();
+                    System.out.println("Received: " + message);
                 }
+            } finally {
+                close();
             }
-        });
+        }, "slots-connection-recv");
 
         receiveThread.start();
+    }
+
+    public void close() {
+        running = false;
+        if (receiveThread != null) {
+            receiveThread.interrupt();
+        }
+        try {
+            socket.close();
+        } catch (IOException ignored) {
+        }
     }
 }

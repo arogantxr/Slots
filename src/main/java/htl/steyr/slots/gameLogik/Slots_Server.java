@@ -2,11 +2,9 @@ package htl.steyr.slots.gameLogik;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class Slots_Server {
     private final ServerSocket server;
@@ -24,21 +22,21 @@ public class Slots_Server {
         running = true;
     }
 
-    public void acceptConnections(){
+    public void acceptConnections() {
 
         acceptnewConnections = new Thread(() -> {
             while (running) {
-                try (Socket newconnection = server.accept()) {
-
-                    Connection_Handling cl = new Connection_Handling(newconnection);
-
+                try {
+                    Connection_Handling cl = new Connection_Handling(server.accept());
                     clients.add(cl);
-
+                    cl.acceptnewConnections();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    if (running) {
+                        e.printStackTrace();
+                    }
                 }
             }
-        });
+        }, "slots-server-accept");
 
         acceptnewConnections.start();
     }
@@ -46,21 +44,26 @@ public class Slots_Server {
 
     public void stop() throws IOException {
         running = false;
-        if(acceptnewConnections != null) acceptnewConnections.interrupt();
+        if (acceptnewConnections != null) acceptnewConnections.interrupt();
+        synchronized (clients) {
+            for (Connection_Handling client : clients) {
+                client.close();
+            }
+        }
         server.close();
     }
 
-    static void main() {
+    public static void main(String[] args) {
 
         System.out.println("===SLOTS-SERVER===");
-        int portposition=55555;
+        int portposition = 55555;
 
         try {
             Slots_Server newserver = new Slots_Server(portposition);
             newserver.acceptConnections();
 
-            System.out.println("Server is running on Port: "+portposition);
-        } catch(IOException e){
+            System.out.println("Server is running on Port: " + portposition);
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
