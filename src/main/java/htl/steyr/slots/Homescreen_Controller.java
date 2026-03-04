@@ -28,7 +28,7 @@ public class Homescreen_Controller {
     private VBox joinInputBox;
 
     @FXML
-    private HBox mainButtonBox;
+    private VBox mainButtonBox;
 
     @FXML
     private TextField portField;

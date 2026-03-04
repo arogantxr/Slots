@@ -1,57 +1,74 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox alignment="CENTER" spacing="20.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/23.0.1" fx:controller="htl.steyr.slots.Homescreen_Controller">
-    <padding>
-        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-    </padding>
+<AnchorPane fx:id="mainContainer" prefHeight="877.0" prefWidth="1506.0" styleClass="root" stylesheets="@../CSS/game.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="htl.steyr.slots.Homescreen_Controller">
 
-    <!-- Titel -->
-    <Label style="-fx-font-size: 32; -fx-font-weight: bold;" text="Slot's">
-      <font>
-         <Font name="Bernard MT Condensed" size="12.0" />
-      </font></Label>
+        <!-- Left Section: Header -->
+     <VBox alignment="CENTER" layoutX="423.0" layoutY="46.0" prefHeight="393.0" prefWidth="633.0" spacing="20">
+         <Label styleClass="title-label" text="🎰" />
+         <Label styleClass="title-label" text="SLOTS" />
+         <Label styleClass="subtitle-label" text="♠ Multiplayer ♣">
+         <font>
+            <Font name="System Bold" size="34.0" />
+         </font></Label>
+         <Separator prefHeight="17.0" prefWidth="628.0" styleClass="separator" />
+         <Label prefHeight="16.0" prefWidth="303.0" style="-fx-text-alignment: center;" styleClass="subtitle-label" text="Willkommen im exklusiven Multiplayer Casino" />
+     </VBox>
 
-    <!-- Spielernamen-Eingabefeld -->
-    <TextField fx:id="playerNameField" prefWidth="300" promptText="Spielernamen eingeben" />
+        <!-- Center Section: Input & Actions -->
+     <VBox fx:id="mainButtonBox" alignment="CENTER" layoutX="512.0" layoutY="439.0" prefHeight="293.0" prefWidth="444.0" spacing="20">
+         <!-- Player Name Input -->
+         <VBox alignment="CENTER" spacing="8">
+             <Label styleClass="input-label" text="SPIELERNAME" />
+             <TextField fx:id="playerNameField" alignment="CENTER" prefWidth="300" promptText="Geben Sie Ihren Namen ein" styleClass="input-field" />
+         </VBox>
 
-    <!-- Fehler-Label -->
-    <Label fx:id="errorLabel" textFill="RED" visible="false" />
+            <!-- Error Label -->
+         <Label fx:id="errorLabel" managed="false" styleClass="error-label" visible="false" />
 
-    <!-- Host Eingabefelder -->
-    <VBox fx:id="hostInputBox" alignment="CENTER" spacing="10.0" visible="false">
-        <Label style="-fx-font-size: 12;" text="Portnummer:" />
-        <TextField fx:id="portField" prefWidth="250" promptText="z. B. 5000" />
-        <HBox alignment="CENTER" spacing="10.0">
-            <Button onAction="#handleStartServer" style="-fx-font-size: 12;" text="Server starten" />
-            <Button onAction="#handleCancelHost" style="-fx-font-size: 12;" text="Abbrechen" />
-        </HBox>
-    </VBox>
+            <!-- Main Action Buttons -->
+         <VBox alignment="CENTER" spacing="12">
+             <Button onAction="#handleHostGame" prefHeight="44" prefWidth="260" styleClass="primary-button" text="🎲 SPIEL HOSTEN" />
+             <Button onAction="#handleJoinGame" prefHeight="44" prefWidth="260" styleClass="primary-button" text="♥ SPIEL BEITRETEN" />
+         </VBox>
 
-    <!-- Join Eingabefelder -->
-    <VBox fx:id="joinInputBox" alignment="CENTER" spacing="10.0" visible="false">
-        <Label style="-fx-font-size: 12;" text="IP-Adresse:" />
-        <TextField fx:id="ipField" prefWidth="250" promptText="z. B. 192.168.1.100" />
-        <Label style="-fx-font-size: 12;" text="Portnummer:" />
-        <TextField fx:id="portFieldJoin" prefWidth="250" promptText="z. B. 5000" />
-        <HBox alignment="CENTER" spacing="10.0">
-            <Button onAction="#handleConnect" style="-fx-font-size: 12;" text="Verbinden" />
-            <Button onAction="#handleCancelJoin" style="-fx-font-size: 12;" text="Abbrechen" />
-        </HBox>
-    </VBox>
+            <Separator prefWidth="250" styleClass="separator" />
 
-    <!-- Buttons -->
-    <HBox fx:id="mainButtonBox" alignment="CENTER" spacing="10.0">
-        <Button onAction="#handleHostGame" style="-fx-font-size: 14;" text="Spiel hosten" />
-        <Button onAction="#handleJoinGame" style="-fx-font-size: 14;" text="Spiel beitreten" />
-    </HBox>
+            <Button onAction="#handleExit" prefHeight="36" prefWidth="200" styleClass="secondary-button" text="TISCH VERLASSEN" />
+     </VBox>
 
-    <Button onAction="#handleExit" style="-fx-font-size: 12;" text="Beenden" />
-</VBox>
+              <!-- Right Section: Input Forms (Hidden by default) -->
+     <VBox fx:id="joinInputBox" alignment="CENTER" layoutX="554.0" layoutY="435.0" prefHeight="284.0" prefWidth="360.0" spacing="15" visible="false">
+           <Label styleClass="input-label" text="IP-ADRESSE" />
+           <TextField fx:id="ipField" prefWidth="250" promptText="z.B. 192.168.1.100" styleClass="input-field" />
+           <Label styleClass="input-label" text="PORTNUMMER" />
+           <TextField fx:id="portFieldJoin" prefWidth="250" promptText="z.B. 5000" styleClass="input-field" />
+           <Button onAction="#handleConnect" prefHeight="48.0" prefWidth="238.0" styleClass="primary-button" text="VERBINDEN" />
+           <Button onAction="#handleCancelJoin" prefHeight="41.0" prefWidth="179.0" styleClass="secondary-button" text="ABBRECHEN" />
+
+              </VBox>
+   <VBox fx:id="hostInputBox" alignment="CENTER" layoutX="551.0" layoutY="435.0" prefHeight="199.0" prefWidth="366.0" spacing="15" visible="false">
+      <children>
+         <Label styleClass="input-label" text="PORTNUMMER" />
+         <TextField fx:id="portField" prefWidth="250" promptText="z.B. 5000" styleClass="input-field" />
+         <Button onAction="#handleStartServer" prefHeight="48.0" prefWidth="238.0" styleClass="primary-button" text="VERBINDEN" />
+         <Button onAction="#handleCancelHost" prefHeight="41.0" prefWidth="179.0" styleClass="secondary-button" text="ABBRECHEN" />
+      </children>
+   </VBox>
+   <Separator layoutX="797.5" layoutY="577.5" prefHeight="17.0" prefWidth="500.0" rotate="90.0" styleClass="separator" />
+   <Separator layoutX="179.0" layoutY="577.5" prefHeight="17.0" prefWidth="500.0" rotate="90.0" styleClass="separator" />
+   <ImageView disable="true" fitHeight="884.0" fitWidth="1517.0" layoutX="-3.0" layoutY="-1.0" pickOnBounds="true" preserveRatio="true">
+    <image>
+        <Image url="@/htl/steyr/slots/Bilder/chips2.png" />
+    </image>
+    </ImageView>
+</AnchorPane>
