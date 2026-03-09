@@ -1,16 +1,4 @@
-/**
 
-
-
-
-.root {
-    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%,
-    #140000 0%,
-    #4b0000 40%,
-    #2b0000 70%,
-    #0d0000 100%);
-    -fx-font-family: "Georgia", "Times New Roman", serif;
-}
 
 /* Main Container */
 #mainContainer {

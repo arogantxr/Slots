@@ -98,6 +98,35 @@ public class Homescreen_Controller {
         } catch (NumberFormatException e) {
             showError("Ungültige Portnummer!");
         }
+
+        // Connection zum Server herstellen nachdem server gestartet wurde
+
+        String ip = ipField.getText().trim();
+
+        if (ip.isEmpty() || portStr.isEmpty()) {
+            showError("Bitte IP-Adresse und Portnummer eingeben!");
+            return;
+        }
+
+        if (!isValidIP(ip)) {
+            showError("Ungültige IP-Adresse!");
+            return;
+        }
+
+        try {
+            int port = Integer.parseInt(portStr);
+            if (port < 1024 || port > 65535) {
+                showError("Port muss zwischen 1024 und 65535 liegen!");
+                return;
+            }
+
+            System.out.println("Verbindung zu " + ip + ":" + port + " als " + playerName);
+            //Client Klasse Aufrufen
+            hideError();
+
+        } catch (NumberFormatException e) {
+            showError("Ungültige Portnummer!");
+        }
     }
 
     @FXML
