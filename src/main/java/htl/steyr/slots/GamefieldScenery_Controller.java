@@ -1,4 +1,4 @@
-package htl.steyr.slots.gameLogik;
+package htl.steyr.slots;
 
 import javafx.stage.Stage;
 
