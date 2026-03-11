@@ -131,6 +131,24 @@ public class Game {
         return true;
     }
 
+    public Player getPreviousAlivePlayer(Player player) {
+        int index = players.indexOf(player);
+
+        index--;
+        if (index < 0) {
+            index = players.size() - 1;
+        }
+
+        while (!players.get(index).isAlive()) {
+            index--;
+            if (index < 0) {
+                index = players.size() - 1;
+            }
+        }
+
+        return players.get(index);
+    }
+
     public Player getLeader() {
         Player leader = null;
 
