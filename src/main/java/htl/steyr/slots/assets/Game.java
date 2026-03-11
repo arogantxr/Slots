@@ -7,7 +7,6 @@ public class Game {
 
     private final List<Player> players = new ArrayList<>();
     private int currentPlayerIndex;
-    private Claim currentClaim;
 
     public void addPlayer(Player player) {
         players.add(player);
@@ -19,14 +18,10 @@ public class Game {
                 player.spin();
             }
         }
-        currentClaim = null;
         currentPlayerIndex = 0;
     }
 
-    public void makeClaim(Player player, String symbol, int amount) {
-        currentClaim = new Claim(symbol, amount, player);
-        nextPlayer();
-    }
+
 
     public void nextPlayer() {
         currentPlayerIndex++;
@@ -60,9 +55,6 @@ public class Game {
         return players;
     }
 
-    public Claim getCurrentClaim() {
-        return currentClaim;
-    }
 
     public Player getCurrentPlayer() {
         return players.get(currentPlayerIndex);
