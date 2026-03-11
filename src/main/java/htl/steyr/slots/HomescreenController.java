@@ -8,6 +8,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.io.IOException;
+
 public class HomescreenController {
 
     @FXML
@@ -85,38 +87,29 @@ public class HomescreenController {
                 return;
             }
 
-            System.out.println("Server wird gestartet auf Port: " + port + " von Spieler: " + playerName);
 
             // Server starten (hier muss die Slots_Server Klasse aufgerufen werden)
             // Slots_Server server = new Slots_Server(playerName, port);
             // server.start();
 
 
-                try {
-                    GameServer newserver = new GameServer(port);
-                    newserver.acceptConnections();
+            try {
+                GameServer newserver = new GameServer(port);
+                newserver.acceptConnections();
 
-                    System.out.println("Server is running on Port: " + port);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                System.out.println("Server wird gestartet auf Port: " + port + " von Spieler: " + playerName);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
 
             // Client für den Host starten (Verbindung zu localhost)
             GameClient hostClient = new GameClient(playerName, "localhost", port);
 
-            try {
-                hostClient.connect();
-                hideError();
 
-                //zu game wechseln
 
-            } catch (Exception e) {
-                showError("Server-Verbindung fehlgeschlagen: " + e.getMessage());
-            }
-
-        } catch (NumberFormatException e) {
-            showError("Ungültige Portnummer!");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
 
         // Connection zum Server herstellen nachdem server gestartet wurde
@@ -150,10 +143,13 @@ public class HomescreenController {
     }
 
 
-
-
     @FXML
     private void handleConnect() {
+
+        if (!validatePlayerName()) {
+            return;
+        }
+
         String ip = ipField.getText().trim();
         String portStr = portFieldJoin.getText().trim();
 
@@ -174,21 +170,15 @@ public class HomescreenController {
                 return;
             }
 
-            // Client instanziieren und Daten übergeben
-            GameClient client = new GameClient(playerName, ip, port);
 
-            // Verbindung herstellen
-            try {
-                client.connect();
-                hideError();
+            GameClient newclient = new GameClient(playerName, ip, port);
 
-                // zu game wechseln
+                System.out.println("versucht zu verbinden");
 
-            } catch (Exception e) {
-                showError("Verbindung fehlgeschlagen: " + e.getMessage());
-            }
 
-        } catch (NumberFormatException e) {
+
+
+        } catch (NumberFormatException | IOException e) {
             showError("Ungültige Portnummer!");
         }
     }
