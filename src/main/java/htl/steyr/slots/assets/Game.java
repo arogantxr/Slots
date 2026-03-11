@@ -37,6 +37,36 @@ public class Game {
     }
 
 
+    public boolean deadSpin(Player player) {
+        List<String> spin = player.deadSpin();
+
+        if (spin.contains("Hearts")) {
+            return true;
+        }
+
+        player.eliminate();
+        return false;
+    }
+
+    public Player eliminateLastPlaceIfLeaderCan() {
+        Player leader = getLeader();
+        Player lastPlace = getLastPlace();
+
+        if (leader == null || lastPlace == null) {
+            return null;
+        }
+
+        if (leader == lastPlace) {
+            return null;
+        }
+
+        if (leader.getClaimedHearts() > 5) {
+            lastPlace.eliminate();
+            return lastPlace;
+        }
+
+        return null;
+    }
 
 
     public void nextPlayer() {
