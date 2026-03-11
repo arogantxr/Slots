@@ -1,5 +1,6 @@
 package htl.steyr.slots;
 
+import htl.steyr.slots.gameLogik.Slots_Client;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -90,10 +91,24 @@ public class Homescreen_Controller {
                 return;
             }
 
-
             System.out.println("Server wird gestartet auf Port: " + port + " von Spieler: " + playerName);
-            // Hier muss server klasse aufgerufen werden
-            hideError();
+
+            // Server starten (hier muss die Slots_Server Klasse aufgerufen werden)
+            // Slots_Server server = new Slots_Server(playerName, port);
+            // server.start();
+
+            // Client für den Host starten (Verbindung zu localhost)
+            Slots_Client hostClient = new Slots_Client(playerName, "localhost", port);
+
+            try {
+                hostClient.connect();
+                hideError();
+
+                //zu game wechseln
+
+            } catch (Exception e) {
+                showError("Server-Verbindung fehlgeschlagen: " + e.getMessage());
+            }
 
         } catch (NumberFormatException e) {
             showError("Ungültige Portnummer!");
@@ -129,6 +144,9 @@ public class Homescreen_Controller {
         }
     }
 
+
+
+
     @FXML
     private void handleConnect() {
         String ip = ipField.getText().trim();
@@ -151,9 +169,19 @@ public class Homescreen_Controller {
                 return;
             }
 
-            System.out.println("Verbindung zu " + ip + ":" + port + " als " + playerName);
-            //Client Klasse Aufrufen
-            hideError();
+            // Client instanziieren und Daten übergeben
+            Slots_Client client = new Slots_Client(playerName, ip, port);
+
+            // Verbindung herstellen
+            try {
+                client.connect();
+                hideError();
+
+                // zu game wechseln
+
+            } catch (Exception e) {
+                showError("Verbindung fehlgeschlagen: " + e.getMessage());
+            }
 
         } catch (NumberFormatException e) {
             showError("Ungültige Portnummer!");
