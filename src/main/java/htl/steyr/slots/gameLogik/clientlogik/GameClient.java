@@ -8,38 +8,37 @@ import java.util.Scanner;
 
 
 public class GameClient {
+    private String playerName;
+    private String serverIP;
+    private int serverPort;
+    private Socket socket;
 
-    //for DEMO
+    public GameClient(String playerName, String serverIP, int serverPort) {
+        this.playerName = playerName;
+        this.serverIP = serverIP;
+        this.serverPort = serverPort;
+    }
 
-    static void main() throws IOException {
-        try (Socket connection = new Socket("localhost", 55555);
-            Scanner commandLineScanner = new Scanner(System.in);
-            PrintWriter out = new PrintWriter(connection.getOutputStream(), true)){
+    public void connect() throws IOException {
+        // Verbindung zum Server aufbauen
+        socket = new Socket(serverIP, serverPort);
+        System.out.println("Verbunden mit Server: " + serverIP + ":" + serverPort);
+        System.out.println("Spielername: " + playerName);
 
+        // Hier die weitere Verbindungslogik implementieren
+    }
 
+    public String getPlayerName() {
+        return playerName;
+    }
 
-            Thread readingthread = new Thread(()-> {
-
-
-                try(Scanner s = new Scanner(connection.getInputStream());) {
-
-                    while(s.hasNextLine()){
-                        String message = s.nextLine();
-                        System.out.println("Received: " + message);
-                    }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
-            });
-            readingthread.start();
-
-            while(true){
-                out.println(commandLineScanner.nextLine());
+    public void disconnect() {
+        try {
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
             }
-
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

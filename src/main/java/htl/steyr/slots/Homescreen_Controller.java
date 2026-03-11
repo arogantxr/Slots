@@ -1,6 +1,6 @@
 package htl.steyr.slots;
 
-import htl.steyr.slots.gameLogik.Slots_Client;
+import htl.steyr.slots.gameLogik.clientlogik.GameClient;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -98,7 +98,7 @@ public class Homescreen_Controller {
             // server.start();
 
             // Client für den Host starten (Verbindung zu localhost)
-            Slots_Client hostClient = new Slots_Client(playerName, "localhost", port);
+            GameClient hostClient = new GameClient(playerName, "localhost", port);
 
             try {
                 hostClient.connect();
@@ -170,7 +170,7 @@ public class Homescreen_Controller {
             }
 
             // Client instanziieren und Daten übergeben
-            Slots_Client client = new Slots_Client(playerName, ip, port);
+            GameClient client = new GameClient(playerName, ip, port);
 
             // Verbindung herstellen
             try {
