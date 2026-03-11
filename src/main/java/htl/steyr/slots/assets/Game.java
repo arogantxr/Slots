@@ -35,6 +35,27 @@ public class Game {
         }
     }
 
+    public boolean isGameOver() {
+        int alive = 0;
+
+        for (Player player : players) {
+            if (player.isAlive()) {
+                alive++;
+            }
+        }
+
+        return alive <= 1;
+    }
+
+    public Player getWinner() {
+        for (Player player : players) {
+            if (player.isAlive()) {
+                return player;
+            }
+        }
+        return null;
+    }
+
     public List<Player> getPlayers() {
         return players;
     }
