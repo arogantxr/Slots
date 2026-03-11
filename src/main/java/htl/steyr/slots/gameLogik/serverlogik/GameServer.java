@@ -1,4 +1,4 @@
-package htl.steyr.slots.gameLogik;
+package htl.steyr.slots.gameLogik.serverlogik;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -30,6 +30,7 @@ public class GameServer {
                     ServerConnection cl = new ServerConnection(server.accept());
                     clients.add(cl);
                     cl.acceptnewConnections();
+                    System.out.println("New client connected: " + cl);
                 } catch (IOException e) {
                     if (running) {
                         e.printStackTrace();
@@ -39,6 +40,12 @@ public class GameServer {
         }, "slots-server-accept");
 
         acceptnewConnections.start();
+    }
+
+    public void startNewGame() {
+
+                System.out.println("Starting a new game with " + clients.size() + " players.");
+                //hier wird ein neuer Gametable generiert
     }
 
 
