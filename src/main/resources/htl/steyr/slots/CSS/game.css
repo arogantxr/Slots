@@ -15,7 +15,7 @@
     -fx-font-size: 72px;
     -fx-font-weight: bold;
     -fx-text-fill: linear-gradient(to right, #FFD700, #FFA500, #FFD700);
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.8), 25, 0.8, 0, 0);
+    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.6), 25, 0.8, 0, 0);
     -fx-font-family: "Georgia", serif;
     -fx-letter-spacing: 3;
 }
@@ -78,7 +78,7 @@
 
 .primary-button:hover {
     -fx-background-color: linear-gradient(to bottom, #B30000, #8B0000);
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.9), 25, 0.85, 0, 0);
+    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.6), 25, 0.85, 0, 0);
     -fx-border-width: 2.5;
 }
 
