@@ -61,6 +61,7 @@ public class Game {
         }
 
         deadSpin(deadSpinPlayer);
+        callingPhase = false;
         return deadSpinPlayer;
     }
 
@@ -75,6 +76,24 @@ public class Game {
         return false;
     }
 
+    public boolean hasUniqueLeader() {
+        Player leader = getLeader();
+
+        if (leader == null) {
+            return false;
+        }
+
+        int count = 0;
+
+        for (Player player : players) {
+            if (player.isAlive() && player.getClaimedHearts() == leader.getClaimedHearts()) {
+                count++;
+            }
+        }
+
+        return count == 1;
+    }
+
     public Player eliminateLastPlaceIfLeaderCan() {
         Player leader = getLeader();
         Player lastPlace = getLastPlace();
@@ -84,6 +103,10 @@ public class Game {
         }
 
         if (leader == lastPlace) {
+            return null;
+        }
+
+        if (!hasUniqueLeader()) {
             return null;
         }
 
