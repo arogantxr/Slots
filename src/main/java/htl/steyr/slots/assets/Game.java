@@ -7,7 +7,6 @@ public class Game {
 
     private final List<Player> players = new ArrayList<>();
     private int currentPlayerIndex;
-    private boolean callingPhase;
 
     public void addPlayer(Player player) {
         players.add(player);
@@ -21,7 +20,6 @@ public class Game {
         }
 
         currentPlayerIndex = findNextAlivePlayer(0);
-        callingPhase = false;
     }
 
     public List<String> spinCurrentPlayer() {
@@ -44,10 +42,6 @@ public class Game {
         player.setClaimedHearts(hearts);
         player.setSubmitted(true);
         nextPlayer();
-
-        if (allAlivePlayersSubmitted()) {
-            callingPhase = true;
-        }
     }
 
     public Player callPlayer(Player caller, Player target) {
@@ -61,7 +55,6 @@ public class Game {
         }
 
         deadSpin(deadSpinPlayer);
-        callingPhase = false;
         return deadSpinPlayer;
     }
 
@@ -74,6 +67,56 @@ public class Game {
 
         player.eliminate();
         return false;
+    }
+
+    public boolean allAlivePlayersSubmitted() {
+        for (Player player : players) {
+            if (player.isAlive() && !player.hasSubmitted()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public Player getPreviousSubmittedAlivePlayer(Player player) {
+        int index = players.indexOf(player);
+
+        index--;
+        if (index < 0) {
+            index = players.size() - 1;
+        }
+
+        while (players.get(index) != player) {
+            Player previousPlayer = players.get(index);
+
+            if (previousPlayer.isAlive() && previousPlayer.hasSubmitted()) {
+                return previousPlayer;
+            }
+
+            index--;
+            if (index < 0) {
+                index = players.size() - 1;
+            }
+        }
+
+        return null;
+    }
+
+    public Player getLeader() {
+        Player leader = null;
+
+        for (Player player : players) {
+            if (!player.isAlive()) {
+                continue;
+            }
+
+            if (leader == null || player.getClaimedHearts() > leader.getClaimedHearts()) {
+                leader = player;
+            }
+        }
+
+        return leader;
     }
 
     public boolean hasUniqueLeader() {
@@ -94,95 +137,41 @@ public class Game {
         return count == 1;
     }
 
-    public Player eliminateLastPlaceIfLeaderCan() {
-        Player leader = getLeader();
+    public List<Player> getLastPlacePlayers() {
+        List<Player> lastPlayers = new ArrayList<>();
         Player lastPlace = getLastPlace();
 
-        if (leader == null || lastPlace == null) {
-            return null;
+        if (lastPlace == null) {
+            return lastPlayers;
         }
 
-        if (leader == lastPlace) {
-            return null;
+        for (Player player : players) {
+            if (player.isAlive() && player.getClaimedHearts() == lastPlace.getClaimedHearts()) {
+                lastPlayers.add(player);
+            }
         }
 
-        if (!hasUniqueLeader()) {
-            return null;
+        return lastPlayers;
+    }
+
+    public boolean canLeaderEliminate() {
+        Player leader = getLeader();
+
+        if (leader == null) {
+            return false;
         }
 
-        if (leader.getClaimedHearts() > 5) {
-            lastPlace.eliminate();
-            return lastPlace;
-        }
+        return hasUniqueLeader() && leader.getClaimedHearts() > 5;
+    }
 
-        return null;
+    public void eliminatePlayer(Player player) {
+        if (player != null) {
+            player.eliminate();
+        }
     }
 
     public void nextPlayer() {
         currentPlayerIndex = findNextAlivePlayer(currentPlayerIndex + 1);
-    }
-
-    public boolean allAlivePlayersSubmitted() {
-        for (Player player : players) {
-            if (player.isAlive() && !player.hasSubmitted()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public Player getPreviousAlivePlayer(Player player) {
-        int index = players.indexOf(player);
-
-        index--;
-        if (index < 0) {
-            index = players.size() - 1;
-        }
-
-        while (!players.get(index).isAlive()) {
-            index--;
-            if (index < 0) {
-                index = players.size() - 1;
-            }
-        }
-
-        return players.get(index);
-    }
-
-    public Player getLeader() {
-        Player leader = null;
-
-        for (Player player : players) {
-            if (!player.isAlive()) {
-                continue;
-            }
-
-            if (leader == null || player.getClaimedHearts() > leader.getClaimedHearts()) {
-                leader = player;
-            }
-        }
-
-        return leader;
-    }
-
-    public Player getLastPlace() {
-        Player lastPlace = null;
-
-        for (Player player : players) {
-            if (!player.isAlive()) {
-                continue;
-            }
-
-            if (lastPlace == null || player.getClaimedHearts() < lastPlace.getClaimedHearts()) {
-                lastPlace = player;
-            }
-        }
-
-        return lastPlace;
-    }
-
-    public boolean isCallingPhase() {
-        return callingPhase;
     }
 
     public boolean isGameOver() {
@@ -203,6 +192,7 @@ public class Game {
                 return player;
             }
         }
+
         return null;
     }
 
@@ -212,6 +202,22 @@ public class Game {
 
     public List<Player> getPlayers() {
         return players;
+    }
+
+    private Player getLastPlace() {
+        Player lastPlace = null;
+
+        for (Player player : players) {
+            if (!player.isAlive()) {
+                continue;
+            }
+
+            if (lastPlace == null || player.getClaimedHearts() < lastPlace.getClaimedHearts()) {
+                lastPlace = player;
+            }
+        }
+
+        return lastPlace;
     }
 
     private int findNextAlivePlayer(int startIndex) {
