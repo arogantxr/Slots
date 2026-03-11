@@ -7,6 +7,7 @@ public class Game {
 
     private final List<Player> players = new ArrayList<>();
     private int currentPlayerIndex;
+    private boolean callingPhase;
 
     public void addPlayer(Player player) {
         players.add(player);
@@ -38,12 +39,47 @@ public class Game {
 
 
 
-
     public void nextPlayer() {
         currentPlayerIndex++;
         if (currentPlayerIndex >= players.size()) {
             currentPlayerIndex = 0;
         }
+    }
+
+    public Player getLeader() {
+        Player leader = null;
+
+        for (Player player : players) {
+            if (!player.isAlive()) {
+                continue;
+            }
+
+            if (leader == null || player.getClaimedHearts() > leader.getClaimedHearts()) {
+                leader = player;
+            }
+        }
+
+        return leader;
+    }
+
+    public Player getLastPlace() {
+        Player lastPlace = null;
+
+        for (Player player : players) {
+            if (!player.isAlive()) {
+                continue;
+            }
+
+            if (lastPlace == null || player.getClaimedHearts() < lastPlace.getClaimedHearts()) {
+                lastPlace = player;
+            }
+        }
+
+        return lastPlace;
+    }
+
+    public boolean isCallingPhase() {
+        return callingPhase;
     }
 
     public boolean isGameOver() {
@@ -66,6 +102,7 @@ public class Game {
         }
         return null;
     }
+
 
     public Player getCurrentPlayer() {
         return players.get(currentPlayerIndex);
