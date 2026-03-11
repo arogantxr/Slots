@@ -1,4 +1,4 @@
-package htl.steyr.slots.gameLogik;
+package htl.steyr.slots.gameLogik.serverlogik;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -37,9 +37,13 @@ public class ServerConnection {
             } finally {
                 close();
             }
-        }, "slots-connection-recv");
+        });
 
         receiveThread.start();
+    }
+
+    public void sendMessage(Object inputs){
+        out.println(inputs);
     }
 
     public void close() {
