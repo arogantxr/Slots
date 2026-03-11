@@ -23,6 +23,17 @@ public class Game {
         currentPlayerIndex = 0;
     }
 
+    public void makeClaim(Player player, String symbol, int amount) {
+        currentClaim = new Claim(symbol, amount, player);
+        nextPlayer();
+    }
+
+    public void nextPlayer() {
+        currentPlayerIndex++;
+        if (currentPlayerIndex >= players.size()) {
+            currentPlayerIndex = 0;
+        }
+    }
 
     public List<Player> getPlayers() {
         return players;
