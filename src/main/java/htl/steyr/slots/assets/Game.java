@@ -18,7 +18,21 @@ public class Game {
                 player.spin();
             }
         }
-        currentPlayerIndex = 0;
+    }
+
+    public List<String> spinCurrentPlayer() {
+        return getCurrentPlayer().spin();
+    }
+
+    public List<String> respinCurrentPlayer() {
+        Player player = getCurrentPlayer();
+
+        if (!player.hasUsedRespin()) {
+            player.useRespin();
+            return player.spin();
+        }
+
+        return player.getLastSpin();
     }
 
 
