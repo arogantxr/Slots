@@ -2,19 +2,12 @@ package htl.steyr.slots;
 
 import htl.steyr.slots.gameLogik.clientlogik.GameClient;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 
-import java.io.IOException;
-
-public class Homescreen_Controller {
+public class HomescreenController {
 
     @FXML
     private TextField playerNameField;

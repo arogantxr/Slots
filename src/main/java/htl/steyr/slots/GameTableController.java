@@ -1,4 +1,4 @@
-package htl.steyr.slots.gameLogik;
+package htl.steyr.slots;
 
 
 import javafx.event.ActionEvent;
@@ -6,7 +6,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 
-public class GameUI_Controller {
+public class GameTableController {
 
 
     public Button btnCard1;

@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane fx:id="mainContainer" prefHeight="877.0" prefWidth="1506.0" styleClass="root" stylesheets="@../CSS/game.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="htl.steyr.slots.Homescreen_Controller">
+<AnchorPane fx:id="mainContainer" prefHeight="877.0" prefWidth="1506.0" styleClass="root" stylesheets="@../CSS/game.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="htl.steyr.slots.HomescreenController">
 
         <!-- Left Section: Header -->
      <VBox alignment="CENTER" layoutX="423.0" layoutY="46.0" prefHeight="393.0" prefWidth="633.0" spacing="20">
