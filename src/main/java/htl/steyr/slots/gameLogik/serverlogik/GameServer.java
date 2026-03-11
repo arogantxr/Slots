@@ -63,7 +63,7 @@ public class GameServer {
     public static void main(String[] args) {
 
         System.out.println("===SLOTS-SERVER===");
-        int portposition = 55555;
+        int portposition = 22222;
 
         try {
             GameServer newserver = new GameServer(portposition);
