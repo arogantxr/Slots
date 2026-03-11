@@ -37,6 +37,8 @@ public class Game {
 
 
 
+
+
     public void nextPlayer() {
         currentPlayerIndex++;
         if (currentPlayerIndex >= players.size()) {
@@ -65,12 +67,32 @@ public class Game {
         return null;
     }
 
+    public Player getCurrentPlayer() {
+        return players.get(currentPlayerIndex);
+    }
+
     public List<Player> getPlayers() {
         return players;
     }
 
+    private int findNextAlivePlayer(int startIndex) {
+        if (players.isEmpty()) {
+            return 0;
+        }
 
-    public Player getCurrentPlayer() {
-        return players.get(currentPlayerIndex);
+        int index = startIndex;
+
+        if (index >= players.size()) {
+            index = 0;
+        }
+
+        while (!players.get(index).isAlive()) {
+            index++;
+            if (index >= players.size()) {
+                index = 0;
+            }
+        }
+
+        return index;
     }
 }
