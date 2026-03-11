@@ -16,9 +16,12 @@ public class Game {
     public void startRound() {
         for (Player player : players) {
             if (player.isAlive()) {
-                player.spin();
+                player.resetForRound();
             }
         }
+
+        currentPlayerIndex = findNextAlivePlayer(0);
+        callingPhase = false;
     }
 
     public List<String> spinCurrentPlayer() {
@@ -36,6 +39,30 @@ public class Game {
         return player.getLastSpin();
     }
 
+    public void submitCurrentPlayer(int hearts) {
+        Player player = getCurrentPlayer();
+        player.setClaimedHearts(hearts);
+        player.setSubmitted(true);
+        nextPlayer();
+
+        if (allAlivePlayersSubmitted()) {
+            callingPhase = true;
+        }
+    }
+
+    public Player callPlayer(Player caller, Player target) {
+        int realHearts = target.countHearts();
+        Player deadSpinPlayer;
+
+        if (target.getClaimedHearts() > realHearts) {
+            deadSpinPlayer = target;
+        } else {
+            deadSpinPlayer = caller;
+        }
+
+        deadSpin(deadSpinPlayer);
+        return deadSpinPlayer;
+    }
 
     public boolean deadSpin(Player player) {
         List<String> spin = player.deadSpin();
@@ -68,12 +95,17 @@ public class Game {
         return null;
     }
 
-
     public void nextPlayer() {
-        currentPlayerIndex++;
-        if (currentPlayerIndex >= players.size()) {
-            currentPlayerIndex = 0;
+        currentPlayerIndex = findNextAlivePlayer(currentPlayerIndex + 1);
+    }
+
+    public boolean allAlivePlayersSubmitted() {
+        for (Player player : players) {
+            if (player.isAlive() && !player.hasSubmitted()) {
+                return false;
+            }
         }
+        return true;
     }
 
     public Player getLeader() {
@@ -132,7 +164,6 @@ public class Game {
         }
         return null;
     }
-
 
     public Player getCurrentPlayer() {
         return players.get(currentPlayerIndex);
