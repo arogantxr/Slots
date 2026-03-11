@@ -1,6 +1,7 @@
 package htl.steyr.slots;
 
 import htl.steyr.slots.gameLogik.clientlogik.GameClient;
+import htl.steyr.slots.gameLogik.serverlogik.GameServer;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -89,6 +90,17 @@ public class HomescreenController {
             // Server starten (hier muss die Slots_Server Klasse aufgerufen werden)
             // Slots_Server server = new Slots_Server(playerName, port);
             // server.start();
+
+
+                try {
+                    GameServer newserver = new GameServer(port);
+                    newserver.acceptConnections();
+
+                    System.out.println("Server is running on Port: " + port);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
 
             // Client für den Host starten (Verbindung zu localhost)
             GameClient hostClient = new GameClient(playerName, "localhost", port);
