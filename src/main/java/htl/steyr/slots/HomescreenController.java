@@ -93,11 +93,14 @@ public class HomescreenController {
             // server.start();
 
 
+            System.out.printf("\n\n\n" +
+                    "===SLOTS-SERVER===");
+
             try {
                 GameServer newserver = new GameServer(port);
                 newserver.acceptConnections();
 
-                System.out.println("Server wird gestartet auf Port: " + port + " von Spieler: " + playerName);
+                System.out.println("Server is running on Port: " + port);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -107,39 +110,45 @@ public class HomescreenController {
             GameClient hostClient = new GameClient(playerName, "localhost", port);
 
 
+            System.out.println("Host-Client started... " + hostClient.getPlayerName());
+
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
 
         // Connection zum Server herstellen nachdem server gestartet wurde
 
-        String ip = ipField.getText().trim();
-
-        if (ip.isEmpty() || portStr.isEmpty()) {
-            showError("Bitte IP-Adresse und Portnummer eingeben!");
-            return;
-        }
-
-        if (!isValidIP(ip)) {
-            showError("Ungültige IP-Adresse!");
-            return;
-        }
-
-        try {
-            int port = Integer.parseInt(portStr);
-            if (port < 1024 || port > 65535) {
-                showError("Port muss zwischen 1024 und 65535 liegen!");
-                return;
-            }
-
-            System.out.println("Verbindung zu " + ip + ":" + port + " als " + playerName);
-            //Client Klasse Aufrufen
-            hideError();
-
-        } catch (NumberFormatException e) {
-            showError("Ungültige Portnummer!");
-        }
+        /**
+         * String ip = ipField.getText().trim();
+         *
+         *          if (ip.isEmpty() || portStr.isEmpty()) {
+         *          showError("Bitte IP-Adresse und Portnummer eingeben!");
+         *          return;
+         *          }
+         *
+         *          if (!isValidIP(ip)) {
+         *          showError("Ungültige IP-Adresse!");
+         *          return;
+         *          }
+         *
+         *
+         *         try {
+         *             int port = Integer.parseInt(portStr);
+         *             if (port < 1024 || port > 65535) {
+         *                 showError("Port muss zwischen 1024 und 65535 liegen!");
+         *                 return;
+         *             }
+         *
+         *             System.out.println("Verbindung zu " + ip + ":" + port + " als " + playerName);
+         *             //Client Klasse Aufrufen
+         *             hideError();
+         *
+         *         } catch (NumberFormatException e) {
+         *             showError("Ungültige Portnummer!");
+         *
+         *         }
+         */
     }
 
 
@@ -173,13 +182,16 @@ public class HomescreenController {
 
             GameClient newclient = new GameClient(playerName, ip, port);
 
-                System.out.println("versucht zu verbinden");
+
+            System.out.println("name of player...." + newclient.getPlayerName());
 
 
 
 
-        } catch (NumberFormatException | IOException e) {
+        } catch (NumberFormatException e) {
             showError("Ungültige Portnummer!");
+        } catch (IOException e) {
+            showError("Verbindung fehlgeschlagen! Prüfe IP-Adresse und Port.");
         }
     }
 
@@ -205,6 +217,9 @@ public class HomescreenController {
 
 
     private boolean isValidIP(String ip) {
+        if (ip.equalsIgnoreCase("localhost")) {
+            return true;
+        }
         String[] parts = ip.split("\\.");
         if (parts.length != 4) {
             return false;

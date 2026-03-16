@@ -1,5 +1,10 @@
 package htl.steyr.slots.gameLogik.serverlogik;
 
+import htl.steyr.slots.GameApplication;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
@@ -22,7 +27,7 @@ public class GameServer {
         running = true;
     }
 
-    public void acceptConnections() {
+    public void acceptConnections() throws IOException {
 
         acceptnewConnections = new Thread(() -> {
             while (running) {
@@ -30,7 +35,7 @@ public class GameServer {
                     ServerConnection cl = new ServerConnection(server.accept());
                     clients.add(cl);
                     cl.acceptnewConnections();
-                    System.out.println("New client connected: " + cl);
+                    System.out.println("New client connected (Server): " + cl);
                 } catch (IOException e) {
                     if (running) {
                         e.printStackTrace();
@@ -40,12 +45,20 @@ public class GameServer {
         }, "slots-server-accept");
 
         acceptnewConnections.start();
+
     }
 
-    public void startNewGame() {
+    public void startNewGame() throws IOException {
+        Stage stage = new Stage();
 
                 System.out.println("Starting a new game with " + clients.size() + " players.");
                 //hier wird ein neuer Gametable generiert
+
+        FXMLLoader fxmlLoader = new FXMLLoader(GameApplication.class.getResource("stages/Game-view.fxml"));
+        Scene scene = new Scene(fxmlLoader.load());
+        stage.setTitle("Casino Slots - Multiplayer");
+        stage.setScene(scene);
+        stage.show();
     }
 
 
