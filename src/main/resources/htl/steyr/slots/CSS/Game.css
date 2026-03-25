@@ -1,0 +1,154 @@
+/* Root / Table Background */
+.root,
+.anchor-pane {
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%,
+    #140000 0%,
+    #4b0000 40%,
+    #2b0000 70%,
+    #0d0000 100%);
+}
+
+/* Base button style (applies to Liar/Double/Submit by default) */
+.button {
+    -fx-background-color: rgba(50, 150, 50, 0.15);
+    -fx-text-fill: #FFD700;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 18px;
+    -fx-border-color: #228B22;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-font-family: "Georgia", serif;
+    -fx-letter-spacing: 1;
+}
+
+.button:hover {
+    -fx-background-color: rgba(50, 150, 50, 0.25);
+    -fx-border-color: #FFD700;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.5), 12, 0.6, 0, 0);
+}
+
+.button:pressed {
+    -fx-background-color: rgba(50, 150, 50, 0.1);
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+}
+
+/* Spin button = primary action */
+#spinButton {
+    -fx-background-color: linear-gradient(to bottom, #8B0000, #5C0000);
+    -fx-text-fill: #FFD700;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-border-color: #FFD700;
+    -fx-border-width: 2;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.5), 16, 0.7, 0, 4);
+    -fx-font-family: "Georgia", serif;
+    -fx-letter-spacing: 1;
+}
+
+#spinButton:hover {
+    -fx-background-color: linear-gradient(to bottom, #B30000, #8B0000);
+    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.65), 24, 0.85, 0, 0);
+}
+
+#spinButton:pressed {
+    -fx-background-color: linear-gradient(to bottom, #5C0000, #3D0000);
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+/* Card buttons */
+#btnCard1, #btnCard2, #btnCard3, #btnCard4 {
+    -fx-background-color: linear-gradient(to bottom, #fff8e7, #efe0bf);
+    -fx-text-fill: #7a0000;
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-border-color: #b08d57;
+    -fx-border-width: 2;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.45), 10, 0.45, 0, 3);
+    -fx-padding: 0;
+}
+
+#btnCard1:hover, #btnCard2:hover, #btnCard3:hover, #btnCard4:hover {
+    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.45), 16, 0.55, 0, 0);
+    -fx-translate-y: -1;
+}
+
+/* Labels */
+#leaderboardLabel {
+    -fx-text-fill: #FFD700;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Georgia", serif;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.7), 5, 0.4, 0, 1);
+}
+
+/* Info text label */
+#labelInfoText {
+    -fx-text-fill: #FFD700;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Georgia", serif;
+    -fx-background-color: rgba(0, 0, 0, 0.32);
+    -fx-border-color: rgba(255, 215, 0, 0.45);
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 6 10 6 10;
+}
+
+/* Leaderboard list */
+#leaderboardListView {
+    -fx-background-color: rgba(20, 20, 20, 0.9);
+    -fx-border-color: linear-gradient(to bottom, #FFD700, #8B0000);
+    -fx-border-width: 1.5;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+#leaderboardListView .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #FFD700;
+    -fx-font-family: "Georgia", serif;
+    -fx-font-size: 12px;
+}
+
+#leaderboardListView .list-cell:filled:selected {
+    -fx-background-color: rgba(139, 0, 0, 0.55);
+    -fx-text-fill: #FFE38A;
+}
+
+/* Scrollbars subtle dark/gold */
+#leaderboardListView .scroll-bar:vertical,
+#leaderboardListView .scroll-bar:horizontal {
+    -fx-background-color: rgba(0, 0, 0, 0.35);
+}
+
+#leaderboardListView .thumb {
+    -fx-background-color: rgba(255, 215, 0, 0.45);
+    -fx-background-radius: 6;
+}
+
+/* Tutorial "?" button */
+#tutorialButton {
+    -fx-background-color: rgba(0, 0, 0, 0.35);
+    -fx-text-fill: #FFD700;
+    -fx-font-weight: bold;
+    -fx-border-color: rgba(255, 215, 0, 0.65);
+    -fx-border-width: 1.2;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 0 6 0 6;
+}
+
+#tutorialButton:hover {
+    -fx-background-color: rgba(139, 0, 0, 0.35);
+    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.5), 10, 0.6, 0, 0);
+}
