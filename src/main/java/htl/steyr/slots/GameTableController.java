@@ -7,7 +7,10 @@ import htl.steyr.slots.assets.Slotmachine;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -30,8 +33,11 @@ public class GameTableController {
     private boolean hasSpunThisTurn = false;
     private boolean hasCalledThisTurn = false;
 
+    private MediaPlayer backgroundMusicPlayer;
+
     @FXML
     public void initialize() {
+        initBackgroundMusic();
         setupPlayersIfNeeded();
         startNewRound();
 
@@ -333,5 +339,40 @@ public class GameTableController {
 
     private void setInfo(String text) {
         labelInfoText.setText(text);
+    }
+
+    private void initBackgroundMusic() {
+        try {
+            URL musicUrl = getClass().getResource("/htl/steyr/slots/Sounds/backgroundMusic.mp3");
+            if (musicUrl == null) musicUrl = getClass().getResource("/Sounds/backgroundMusic.mp3");
+            if (musicUrl == null) return;
+
+            Media media = new Media(musicUrl.toExternalForm());
+            backgroundMusicPlayer = new MediaPlayer(media);
+            backgroundMusicPlayer.setCycleCount(MediaPlayer.INDEFINITE);
+            backgroundMusicPlayer.setVolume(0.35);
+            backgroundMusicPlayer.play();
+
+            // Beim Schließen der Stage sauber stoppen
+            labelInfoText.sceneProperty().addListener((obs, oldScene, newScene) -> {
+                if (newScene != null) {
+                    newScene.windowProperty().addListener((wObs, oldWindow, newWindow) -> {
+                        if (newWindow != null) {
+                            newWindow.setOnHidden(e -> stopBackgroundMusic());
+                        }
+                    });
+                }
+            });
+        } catch (Exception ignored) {
+            // Musikfehler soll das Spiel nicht blockieren
+        }
+    }
+
+    private void stopBackgroundMusic() {
+        if (backgroundMusicPlayer != null) {
+            backgroundMusicPlayer.stop();
+            backgroundMusicPlayer.dispose();
+            backgroundMusicPlayer = null;
+        }
     }
 }
