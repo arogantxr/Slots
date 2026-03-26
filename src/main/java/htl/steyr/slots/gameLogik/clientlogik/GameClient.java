@@ -26,6 +26,7 @@ public class GameClient {
 
     public void connect() {
         System.out.println("Spielername: " + playerName);
+        out.println("set-username;" + playerName);
 
         Thread listen = new Thread(() -> {
             try (Scanner in = new Scanner(socket.getInputStream())) {
@@ -81,7 +82,7 @@ public class GameClient {
         }
     }
 
-    static void main() throws IOException {
+    public static void main() throws IOException {
         GameClient client = new GameClient("Player1", "localhost", 22222);
 
         Scanner consoleScanner = new Scanner(System.in);

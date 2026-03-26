@@ -13,6 +13,8 @@ public class ServerConnection {
     private volatile boolean running;
     private Thread receiveThread;
 
+    private String username;
+
     public ServerConnection(Socket newconnection) throws IOException {
         this.socket = newconnection;
 
@@ -33,6 +35,13 @@ public class ServerConnection {
                 while (running && !socket.isClosed() && in.hasNextLine()) {
                     String message = in.nextLine();
                     System.out.println("Received: " + message);
+                    if(message.startsWith("set-username;")){
+                        String[] parts = message.split(";", 2);
+                        if(parts.length == 2){
+                            this.username = parts[1];
+                            System.out.println("Username set to: " + username);
+                        }
+                    }
                 }
             } finally {
                 close();
@@ -44,6 +53,10 @@ public class ServerConnection {
 
     public void sendMessage(Object inputs){
         out.println(inputs);
+    }
+
+    public String getUsername() {
+        return this.username;
     }
 
     public void close() {

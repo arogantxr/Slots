@@ -1,6 +1,7 @@
 package htl.steyr.slots.gameLogik.serverlogik;
 
 import htl.steyr.slots.GameApplication;
+import htl.steyr.slots.LobbyController;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -11,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class GameServer {
+public class GameServer{
     private final ServerSocket server;
     private boolean running;
     private final List<ServerConnection> clients = Collections.synchronizedList(new ArrayList<>());
@@ -20,6 +21,10 @@ public class GameServer {
     public GameServer() throws IOException {
         server = new ServerSocket(12345);
         running = true;
+    }
+
+    public List<ServerConnection> getClientList() {
+        return clients;
     }
 
     public GameServer(int port) throws IOException {

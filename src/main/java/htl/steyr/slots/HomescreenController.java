@@ -2,15 +2,22 @@ package htl.steyr.slots;
 
 import htl.steyr.slots.gameLogik.clientlogik.GameClient;
 import htl.steyr.slots.gameLogik.serverlogik.GameServer;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.logging.Logger;
 
 public class HomescreenController {
+
+    private static final Logger LOGGER = Logger.getLogger(HomescreenController.class.getName());
 
     @FXML
     private TextField playerNameField;
@@ -37,6 +44,8 @@ public class HomescreenController {
     private TextField portFieldJoin;
 
     private String playerName;
+
+    private static GameServer newserver;
 
     /**
      * Validiert den Spielernamen
@@ -72,7 +81,7 @@ public class HomescreenController {
     }
 
     @FXML
-    private void handleStartServer() {
+    private void handleStartServer(ActionEvent actionEvent) {
         String portStr = portField.getText().trim();
 
         if (portStr.isEmpty()) {
@@ -87,18 +96,15 @@ public class HomescreenController {
                 return;
             }
 
-
-            // Server starten (hier muss die Slots_Server Klasse aufgerufen werden)
-            // Slots_Server server = new Slots_Server(playerName, port);
-            // server.start();
-
-
             System.out.printf("\n\n\n" +
                     "===SLOTS-SERVER===");
 
             try {
-                GameServer newserver = new GameServer(port);
+                newserver = new GameServer(port);
                 newserver.acceptConnections();
+                // Übergabe des Servers an die Lobby
+                viewLobby(actionEvent);
+
 
                 System.out.println("Server is running on Port: " + port);
             } catch (IOException e) {
@@ -107,53 +113,25 @@ public class HomescreenController {
 
 
             // Client für den Host starten (Verbindung zu localhost)
-            GameClient hostClient = new GameClient(playerName, "localhost", port);
+            try {
+                GameClient hostClient = new GameClient(playerName, "localhost", port);
+            } catch (IOException e) {
+
+            }
 
 
-            System.out.println("Host-Client started... " + hostClient.getPlayerName());
-
-
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (NumberFormatException e) {
+            showError("Ungültige Portnummer!");
         }
 
         // Connection zum Server herstellen nachdem server gestartet wurde
 
-        /**
-         * String ip = ipField.getText().trim();
-         *
-         *          if (ip.isEmpty() || portStr.isEmpty()) {
-         *          showError("Bitte IP-Adresse und Portnummer eingeben!");
-         *          return;
-         *          }
-         *
-         *          if (!isValidIP(ip)) {
-         *          showError("Ungültige IP-Adresse!");
-         *          return;
-         *          }
-         *
-         *
-         *         try {
-         *             int port = Integer.parseInt(portStr);
-         *             if (port < 1024 || port > 65535) {
-         *                 showError("Port muss zwischen 1024 und 65535 liegen!");
-         *                 return;
-         *             }
-         *
-         *             System.out.println("Verbindung zu " + ip + ":" + port + " als " + playerName);
-         *             //Client Klasse Aufrufen
-         *             hideError();
-         *
-         *         } catch (NumberFormatException e) {
-         *             showError("Ungültige Portnummer!");
-         *
-         *         }
-         */
+
     }
 
 
     @FXML
-    private void handleConnect() {
+    private void handleConnect(ActionEvent actionEvent) {
 
         if (!validatePlayerName()) {
             return;
@@ -181,11 +159,9 @@ public class HomescreenController {
 
 
             GameClient newclient = new GameClient(playerName, ip, port);
+            viewLobby(actionEvent);
 
-
-            System.out.println("name of player...." + newclient.getPlayerName());
-
-
+            LOGGER.info("name of player: " + newclient.getPlayerName());
 
 
         } catch (NumberFormatException e) {
@@ -193,6 +169,28 @@ public class HomescreenController {
         } catch (IOException e) {
             showError("Verbindung fehlgeschlagen! Prüfe IP-Adresse und Port.");
         }
+    }
+
+
+    // Bestehende viewLobby für Joins ohne Server
+    public void viewLobby(ActionEvent actionEvent) throws IOException {
+
+
+        FXMLLoader fxmlLoader = new FXMLLoader(
+                GameApplication.class.getResource("stages/Lobby-view.fxml")
+        );
+
+        Scene newscene = new Scene(fxmlLoader.load());
+
+        Stage newstage = new Stage();
+        newstage.setScene(newscene);
+        newstage.setTitle("Casino Slots - Multiplayer");
+        newstage.show();
+
+        // altes Fenster schließen
+        ((Stage) ((Node) actionEvent.getSource()).getScene().getWindow()).close();
+
+
     }
 
     @FXML
@@ -244,5 +242,9 @@ public class HomescreenController {
 
     private void hideError() {
         errorLabel.setVisible(false);
+    }
+
+    public static GameServer getNewserver() {
+        return newserver;
     }
 }

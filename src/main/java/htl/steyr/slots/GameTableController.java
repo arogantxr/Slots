@@ -171,6 +171,7 @@ public class GameTableController {
         game.addPlayer(new Player("Player 2", slotmachine));
         game.addPlayer(new Player("Player 3", slotmachine));
         game.addPlayer(new Player("Player 4", slotmachine));
+
     }
 
     private void startNewRound() {
