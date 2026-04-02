@@ -158,8 +158,8 @@ public class HomescreenController {
             }
 
 
-            GameClient newclient = new GameClient(playerName, ip, port);
             viewLobby(actionEvent);
+            GameClient newclient = new GameClient(playerName, ip, port);
 
             LOGGER.info("name of player: " + newclient.getPlayerName());
 

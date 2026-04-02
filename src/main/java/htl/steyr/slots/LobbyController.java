@@ -2,8 +2,7 @@ package htl.steyr.slots;
 
 import htl.steyr.slots.gameLogik.serverlogik.GameServer;
 import htl.steyr.slots.gameLogik.serverlogik.ServerConnection;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.FXML;
@@ -13,36 +12,47 @@ import javafx.scene.control.ListView;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LobbyController {
     @FXML
     public ListView<String> playerListView;
+    public List<String> playerNames = new ArrayList<>();
 
-    private final ObservableList<String> clientNames = FXCollections.observableArrayList();
-
-    private ScheduledExecutorService executor;
     private static GameServer server = HomescreenController.getNewserver();
 
 
     public void initialize(){
-        Thread updatelist = new Thread(() -> {
 
-            try {
-                for(ServerConnection connection : server.getClientList()){
-                    if(!playerListView.getItems().contains(connection.getUsername())) {
-                        clientNames.add(connection.getUsername());
+            updatePlayerList();
+    }
+
+    public void updatePlayerList() {
+
+        new Thread (()-> {
+            while(true){
+                for(ServerConnection client : server.getClientList()){
+                    if(client.getUsername() != null && !playerNames.contains(client.getUsername())){
+                        playerNames.add(client.getUsername());
                     }
                 }
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            while (true) {
 
+                // UI-Updates müssen auf dem FX-Thread ausgeführt werden
+                Platform.runLater(() -> {
+                    playerListView.getItems().clear();
+                    playerListView.getItems().addAll(playerNames);
+                });
+
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
-        }, "lobby-updater");
-        updatelist.start();
+        }).start();
+
+
     }
 
 

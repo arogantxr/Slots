@@ -1,5 +1,7 @@
 package htl.steyr.slots.gameLogik.serverlogik;
 
+import htl.steyr.slots.assets.Player;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
