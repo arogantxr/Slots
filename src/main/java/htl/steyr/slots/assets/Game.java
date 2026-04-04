@@ -1,7 +1,9 @@
 package htl.steyr.slots.assets;
 
+import htl.steyr.slots.interfaces.Player;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Verwaltet die Spiellogik für das Slots-Spiel.
@@ -11,6 +13,8 @@ public class Game {
 
     private final List<Player> players = new ArrayList<>();
     private int currentPlayerIndex;
+    private Consumer<String> turnUpdateCallback;
+    private Consumer<List<String>> gameStateCallback;
 
     /**
      * Fügt einen Spieler zum Spiel hinzu.
@@ -238,6 +242,7 @@ public class Game {
      */
     public void nextPlayer() {
         currentPlayerIndex = findNextAlivePlayer(currentPlayerIndex + 1);
+        notifyTurnUpdate(getCurrentPlayer().getName());
     }
 
     /**
@@ -331,4 +336,41 @@ public class Game {
 
         return index;
     }
+
+    /**
+     * Setzt den Callback für die Aktualisierung des Zuges.
+     * @param callback der zu setzende Callback
+     */
+    public void setTurnUpdateCallback(Consumer<String> callback) {
+        this.turnUpdateCallback = callback;
+    }
+
+    /**
+     * Setzt den Callback für die Aktualisierung des Spielstands.
+     * @param callback der zu setzende Callback
+     */
+    public void setGameStateCallback(Consumer<List<String>> callback) {
+        this.gameStateCallback = callback;
+    }
+
+    /**
+     * Benachrichtigt über eine Zug-Aktualisierung.
+     * @param update die Aktualisierung als String
+     */
+    private void notifyTurnUpdate(String update) {
+        if (turnUpdateCallback != null) {
+            turnUpdateCallback.accept(update);
+        }
+    }
+
+    /**
+     * Benachrichtigt über eine Spielstand-Aktualisierung.
+     * @param gameState die Liste der aktuellen Spielstände
+     */
+    private void notifyGameStateUpdate(List<String> gameState) {
+        if (gameStateCallback != null) {
+            gameStateCallback.accept(gameState);
+        }
+    }
 }
+

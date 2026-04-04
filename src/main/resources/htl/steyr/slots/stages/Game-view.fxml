@@ -5,22 +5,22 @@
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane prefHeight="400.0" prefWidth="600.0" stylesheets="@../CSS/Game.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="htl.steyr.slots.GameTableController">
+<AnchorPane prefHeight="400.0" prefWidth="600.0" stylesheets="@../CSS/Game.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="htl.steyr.slots.controller.GameTableController">
     <children>
 
-        <Button fx:id="btnCard1" layoutX="166.0" layoutY="120.0" prefHeight="80.0" prefWidth="60.0" text="❤" />
-        <Button fx:id="btnCard2" layoutX="233.0" layoutY="120.0" prefHeight="80.0" prefWidth="60.0" text="♢" />
-        <Button fx:id="btnCard3" layoutX="300.0" layoutY="120.0" prefHeight="80.0" prefWidth="60.0" text="♢" />
-        <Button fx:id="btnCard4" layoutX="366.0" layoutY="120.0" maxHeight="80.0" maxWidth="60.0" minHeight="-Infinity" minWidth="-Infinity" prefHeight="80.0" prefWidth="60.0" text="❤" />
+        <Button fx:id="btnCard1" layoutX="287.0" layoutY="121.0" prefHeight="80.0" prefWidth="60.0" text="❤" />
+        <Button fx:id="btnCard2" layoutX="354.0" layoutY="121.0" prefHeight="80.0" prefWidth="60.0" text="♢" />
+        <Button fx:id="btnCard3" layoutX="421.0" layoutY="121.0" prefHeight="80.0" prefWidth="60.0" text="♢" />
+        <Button fx:id="btnCard4" layoutX="487.0" layoutY="121.0" maxHeight="80.0" maxWidth="60.0" minHeight="-Infinity" minWidth="-Infinity" prefHeight="80.0" prefWidth="60.0" text="❤" />
 
-        <Button fx:id="spinButton" layoutX="233.0" layoutY="227.0" onAction="#onSpinClick" prefHeight="52.0" prefWidth="133.0" text="Spin" AnchorPane.leftAnchor="233.0" AnchorPane.rightAnchor="234.0" AnchorPane.topAnchor="227.0" />
-        <Label fx:id="labelInfoText" layoutX="487.0" layoutY="299.0" text="Q &lt; ❤ &gt; E" AnchorPane.bottomAnchor="71.0" AnchorPane.rightAnchor="21.0" />
+        <Button fx:id="spinButton" layoutX="354.0" layoutY="228.0" onAction="#onSpinClick" prefHeight="52.0" prefWidth="133.0" text="Spin" AnchorPane.leftAnchor="354.0" AnchorPane.rightAnchor="113.0" AnchorPane.topAnchor="228.0" />
+        <Label fx:id="labelInfoText" layoutX="368.0" layoutY="342.0" text="Q &lt; ❤ &gt; E" AnchorPane.bottomAnchor="28.0" AnchorPane.rightAnchor="140.5" />
 
-        <Button layoutX="29.0" layoutY="335.0" onAction="#onLiarClick" prefHeight="38.0" prefWidth="89.0" text="Liar" AnchorPane.bottomAnchor="26.0" AnchorPane.leftAnchor="29.0" />
-        <Button layoutX="256.0" layoutY="335.0" onAction="#onDoubleClick" prefHeight="38.0" prefWidth="89.0" text="Double" AnchorPane.bottomAnchor="26.0" AnchorPane.leftAnchor="256.0" AnchorPane.rightAnchor="255.0" />
-        <Button layoutX="488.0" layoutY="335.0" onAction="#onSubmitClick" prefHeight="38.0" prefWidth="89.0" text="Submit" AnchorPane.bottomAnchor="26.0" AnchorPane.rightAnchor="23.0" />
+        <Button layoutX="53.0" layoutY="223.0" onAction="#onLiarClick" prefHeight="38.0" prefWidth="89.0" text="Liar" AnchorPane.bottomAnchor="139.0" AnchorPane.leftAnchor="53.0" />
+        <Button layoutX="53.0" layoutY="280.0" onAction="#onDoubleClick" prefHeight="38.0" prefWidth="89.0" text="Double" AnchorPane.bottomAnchor="82.0" AnchorPane.leftAnchor="53.0" AnchorPane.rightAnchor="458.0" />
+        <Button layoutX="53.0" layoutY="338.0" onAction="#onSubmitClick" prefHeight="38.0" prefWidth="89.0" text="Submit" AnchorPane.bottomAnchor="24.0" AnchorPane.rightAnchor="458.0" />
       <Label fx:id="leaderboardLabel" layoutX="15.0" layoutY="11.0" prefHeight="19.0" prefWidth="82.0" text="Player   &lt;3" AnchorPane.leftAnchor="15.0" AnchorPane.topAnchor="11.0" />
-      <ListView fx:id="leaderboardListView" layoutX="15.0" layoutY="37.0" prefHeight="117.0" prefWidth="67.0" AnchorPane.leftAnchor="15.0" AnchorPane.topAnchor="37.0" />
+      <ListView fx:id="leaderboardListView" layoutX="15.0" layoutY="37.0" prefHeight="152.0" prefWidth="224.0" AnchorPane.leftAnchor="15.0" AnchorPane.topAnchor="37.0" />
       <Button fx:id="tutorialButton" layoutX="565.0" layoutY="15.0" mnemonicParsing="false" prefHeight="17.0" prefWidth="11.0" text="?" AnchorPane.rightAnchor="13.0" AnchorPane.topAnchor="15.0" />
 
     </children>

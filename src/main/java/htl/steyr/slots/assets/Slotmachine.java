@@ -35,3 +35,4 @@ public class Slotmachine {
         return hearts;
     }
 }
+

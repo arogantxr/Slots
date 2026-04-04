@@ -1,7 +1,8 @@
-package htl.steyr.slots;
+package htl.steyr.slots.controller;
 
-import htl.steyr.slots.gameLogik.clientlogik.GameClient;
-import htl.steyr.slots.gameLogik.serverlogik.GameServer;
+import htl.steyr.slots.GameApplication;
+import htl.steyr.slots.player.GameClient;
+import htl.steyr.slots.server.GameServer;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -46,6 +47,7 @@ public class HomescreenController {
     private String playerName;
 
     private static GameServer newserver;
+    private static GameClient newclient;
 
     /**
      * Validiert den Spielernamen
@@ -102,21 +104,16 @@ public class HomescreenController {
             try {
                 newserver = new GameServer(port);
                 newserver.acceptConnections();
+
+                // Client für den Host starten (Verbindung zu localhost)
+                newclient = new GameClient(playerName, "localhost", port);
+
                 // Übergabe des Servers an die Lobby
                 viewLobby(actionEvent);
-
 
                 System.out.println("Server is running on Port: " + port);
             } catch (IOException e) {
                 e.printStackTrace();
-            }
-
-
-            // Client für den Host starten (Verbindung zu localhost)
-            try {
-                GameClient hostClient = new GameClient(playerName, "localhost", port);
-            } catch (IOException e) {
-
             }
 
 
@@ -157,12 +154,12 @@ public class HomescreenController {
                 return;
             }
 
-
-            viewLobby(actionEvent);
-            GameClient newclient = new GameClient(playerName, ip, port);
-
+            // Create client first
+            newclient = new GameClient(playerName, ip, port);
             LOGGER.info("name of player: " + newclient.getPlayerName());
 
+            // Then show lobby
+            viewLobby(actionEvent);
 
         } catch (NumberFormatException e) {
             showError("Ungültige Portnummer!");
@@ -181,6 +178,15 @@ public class HomescreenController {
         );
 
         Scene newscene = new Scene(fxmlLoader.load());
+        
+        // Pass the server to the LobbyController (can be null for clients)
+        LobbyController lobbyController = fxmlLoader.getController();
+        if (newserver != null) {
+            lobbyController.setGameServer(newserver);
+        }
+        if (newclient != null) {
+            lobbyController.setGameClient(newclient);
+        }
 
         Stage newstage = new Stage();
         newstage.setScene(newscene);

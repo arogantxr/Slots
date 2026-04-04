@@ -1,9 +1,12 @@
-package htl.steyr.slots;
+package htl.steyr.slots.controller;
 
 
 import htl.steyr.slots.assets.Game;
-import htl.steyr.slots.assets.Player;
-import htl.steyr.slots.assets.Slotmachine;
+import htl.steyr.slots.interfaces.Player;
+import htl.steyr.slots.player.GameClient;
+import htl.steyr.slots.server.GameServer;
+import htl.steyr.slots.server.ServerConnection;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -28,18 +31,19 @@ public class GameTableController {
     @FXML public Button tutorialButton;
 
     private final Game game = new Game();
-    private final Slotmachine slotmachine = new Slotmachine();
+    private GameServer gameServer;
+    private GameClient gameClient;
+    private String currentPlayerName;
+    private MediaPlayer backgroundMusicPlayer;
 
     private boolean hasSpunThisTurn = false;
     private boolean hasCalledThisTurn = false;
+    private boolean isMyTurn = false;
 
-    private MediaPlayer backgroundMusicPlayer;
 
     @FXML
     public void initialize() {
         initBackgroundMusic();
-        setupPlayersIfNeeded();
-        startNewRound();
 
         tutorialButton.setOnAction(e -> showInfo(
                 "Regeln",
@@ -164,14 +168,107 @@ public class GameTableController {
         updateControls();
     }
 
-    private void setupPlayersIfNeeded() {
-        if (!game.getPlayers().isEmpty()) return;
+    /**
+     * Lädt die Spieler aus der ServerConnection-Liste vom GameServer
+     */
+    private void setupPlayersFromGameServer() {
+        // Versuche den GameServer zu finden (muss als Singleton oder über Kontext verfügbar sein)
+        try {
+            // Wenn GameServer bereits läuft, hole die Clients
+            if (gameServer != null) {
+                List<ServerConnection> clients = gameServer.getClientList();
+                
+                if (!clients.isEmpty()) {
+                    for (ServerConnection client : clients) {
+                        game.addPlayer(client);
+                    }
+                    System.out.println("Loaded " + clients.size() + " players from GameServer");
+                    return;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading players from GameServer: " + e.getMessage());
+        }
 
-        game.addPlayer(new Player("Player 1", slotmachine));
-        game.addPlayer(new Player("Player 2", slotmachine));
-        game.addPlayer(new Player("Player 3", slotmachine));
-        game.addPlayer(new Player("Player 4", slotmachine));
+        // Fallback: Erstelle Test-Spieler (wenn kein GameServer verfügbar ist)
+        System.out.println("No GameServer found, using test players");
+        // Hinweis: Hier müssten Test-Player erstellt werden, falls nötig
+    }
 
+    /**
+     * Setzt den GameServer für diesen Controller
+     */
+    public void setGameServer(GameServer server) {
+        this.gameServer = server;
+
+        // Spieler vom GameServer laden (falls verfügbar)
+        setupPlayersFromGameServer();
+
+        // Set up callbacks for broadcasting updates
+        game.setTurnUpdateCallback(currentPlayerName -> {
+            if (gameServer != null) {
+                gameServer.broadcastTurnUpdate(currentPlayerName);
+            }
+        });
+
+        game.setGameStateCallback(playerStates -> {
+            if (gameServer != null) {
+                gameServer.broadcastGameState(playerStates);
+            }
+        });
+
+        // Neue Runde starten
+        startNewRound();
+    }
+
+    public void setGameClient(GameClient client) {
+        this.gameClient = client;
+        // Set this controller as the message handler for the client
+        if (this.gameClient != null) {
+            this.gameClient.setMessageHandler(this::handleServerMessage);
+        }
+    }
+
+    public void handleServerMessage(String message) {
+        if (message.startsWith("turn-update;")) {
+            String[] parts = message.split(";", 2);
+            if (parts.length == 2) {
+                String currentPlayer = parts[1];
+                Platform.runLater(() -> {
+                    isMyTurn = currentPlayer.equals(currentPlayerName);
+                    updateControls();
+                    setInfo(currentPlayer + " ist dran.");
+                });
+            }
+        } else if (message.startsWith("game-state;")) {
+            String[] parts = message.split(";", 2);
+            if (parts.length == 2) {
+                String[] playerStates = parts[1].split("\\|");
+                Platform.runLater(() -> {
+                    updateLeaderboardFromServer(playerStates);
+                });
+            }
+        }
+    }
+
+    private void updateLeaderboardFromServer(String[] playerStates) {
+        List<String> lines = new ArrayList<>();
+        for (String state : playerStates) {
+            lines.add(state);
+        }
+        leaderboardListView.getItems().setAll(lines);
+    }
+
+    public void setCurrentPlayerName(String name) {
+        this.currentPlayerName = name;
+    }
+
+    public String getCurrentPlayerName() {
+        // Return current player name from game if set, otherwise return player's own name
+        if (game.getPlayers().size() > 0) {
+            return game.getCurrentPlayer().getName();
+        }
+        return currentPlayerName;
     }
 
     private void startNewRound() {
@@ -234,7 +331,7 @@ public class GameTableController {
         dialog.setContentText("Wen eliminieren?");
 
         Optional<String> result = dialog.showAndWait();
-        if (result.isEmpty()) return null;
+        if (!result.isPresent()) return null;
 
         String chosen = result.get();
         for (Player p : candidates) {
@@ -258,13 +355,17 @@ public class GameTableController {
     }
 
     private String toSymbol(String value) {
-        return switch (value) {
-            case "Hearts" -> "❤";
-            case "Diamonds" -> "♢";
-            case "Clubs" -> "♣";
-            case "Spades" -> "♠";
-            default -> "?";
-        };
+        if ("Hearts".equals(value)) {
+            return "❤";
+        } else if ("Diamonds".equals(value)) {
+            return "♢";
+        } else if ("Clubs".equals(value)) {
+            return "♣";
+        } else if ("Spades".equals(value)) {
+            return "♠";
+        } else {
+            return "?";
+        }
     }
 
     private void refreshLeaderboard() {
@@ -279,6 +380,11 @@ public class GameTableController {
         }
 
         leaderboardListView.getItems().setAll(lines);
+        
+        // Broadcast game state update
+        if (gameServer != null) {
+            gameServer.broadcastGameState(lines);
+        }
     }
 
     private void updateControls() {
@@ -287,14 +393,23 @@ public class GameTableController {
             return;
         }
 
-        Player current = game.getCurrentPlayer();
-        boolean currentAlive = current.isAlive();
-
-        spinButton.setDisable(!currentAlive || hasSpunThisTurn);
-        btnCard1.setDisable(true);
-        btnCard2.setDisable(true);
-        btnCard3.setDisable(true);
-        btnCard4.setDisable(true);
+        // For clients, only enable buttons if it's their turn
+        if (gameClient != null) {
+            spinButton.setDisable(!isMyTurn || hasSpunThisTurn);
+            btnCard1.setDisable(true);
+            btnCard2.setDisable(true);
+            btnCard3.setDisable(true);
+            btnCard4.setDisable(true);
+        } else {
+            // For host, use the original logic
+            Player current = game.getCurrentPlayer();
+            boolean currentAlive = current.isAlive();
+            spinButton.setDisable(!currentAlive || hasSpunThisTurn);
+            btnCard1.setDisable(true);
+            btnCard2.setDisable(true);
+            btnCard3.setDisable(true);
+            btnCard4.setDisable(true);
+        }
     }
 
     private void disableAllGameButtons() {
@@ -308,7 +423,7 @@ public class GameTableController {
         dialog.setContentText(text);
 
         Optional<String> result = dialog.showAndWait();
-        if (result.isEmpty()) return null;
+        if (!result.isPresent()) return null;
 
         try {
             int value = Integer.parseInt(result.get().trim());
