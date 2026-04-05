@@ -24,6 +24,10 @@ public class Slotmachine {
     }
 
     public int countHearts(List<String> spin) {
+        if (isJackpot(spin)) {
+            return 4;
+        }
+
         int hearts = 0;
 
         for (String symbol : spin) {
@@ -34,5 +38,20 @@ public class Slotmachine {
 
         return hearts;
     }
-}
 
+    private boolean isJackpot(List<String> spin) {
+        if (spin.size() != 4) {
+            return false;
+        }
+
+        String firstSymbol = spin.get(0);
+
+        for (String symbol : spin) {
+            if (!firstSymbol.equals(symbol)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
