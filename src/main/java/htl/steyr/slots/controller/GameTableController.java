@@ -15,20 +15,30 @@ import javafx.scene.media.MediaPlayer;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 public class GameTableController {
 
-    @FXML public Button btnCard1;
-    @FXML public Button btnCard2;
-    @FXML public Button btnCard3;
-    @FXML public Button btnCard4;
-    @FXML public Button spinButton;
-    @FXML public Label labelInfoText;
-    @FXML public Label leaderboardLabel;
-    @FXML public ListView<String> leaderboardListView;
-    @FXML public Button tutorialButton;
+    @FXML
+    public Button btnCard1;
+    @FXML
+    public Button btnCard2;
+    @FXML
+    public Button btnCard3;
+    @FXML
+    public Button btnCard4;
+    @FXML
+    public Button spinButton;
+    @FXML
+    public Label labelInfoText;
+    @FXML
+    public Label leaderboardLabel;
+    @FXML
+    public ListView<String> leaderboardListView;
+    @FXML
+    public Button tutorialButton;
 
     private final Game game = new Game();
     private GameServer gameServer;
@@ -39,6 +49,8 @@ public class GameTableController {
     private boolean hasSpunThisTurn = false;
     private boolean hasCalledThisTurn = false;
     private boolean isMyTurn = false;
+    private String liarTargetName = null;
+    private int liarTargetClaims = 0;
 
 
     @FXML
@@ -53,7 +65,6 @@ public class GameTableController {
     }
 
     public void onLiarClick(ActionEvent actionEvent) {
-        if (game.isGameOver()) return;
         if (!hasSpunThisTurn) {
             setInfo("Du musst zuerst spinnen.");
             return;
@@ -62,6 +73,24 @@ public class GameTableController {
             setInfo("Liar wurde in diesem Zug bereits verwendet.");
             return;
         }
+
+        if (gameServer == null) {
+            // client mode: use liar target info sent by server
+            if (liarTargetName == null) {
+                setInfo("Kein vorheriger abgegebener Spieler zum Callen.");
+                return;
+            }
+            boolean confirm = confirm(
+                    "Liar Call",
+                    "Willst du " + liarTargetName + " callen?\nClaim: " + liarTargetClaims
+            );
+            if (!confirm) return;
+            if (gameClient != null) gameClient.sendMessage("action-liar;" + currentPlayerName);
+            hasCalledThisTurn = true;
+            return;
+        }
+
+        if (game.isGameOver()) return;
 
         Player current = game.getCurrentPlayer();
         Player previous = game.getPreviousSubmittedAlivePlayer(current);
@@ -80,13 +109,7 @@ public class GameTableController {
         Player deadSpinPlayer = game.callPlayer(current, previous);
         hasCalledThisTurn = true;
 
-        showInfo(
-                "Liar Ergebnis",
-                previous.getName() + " hatte: " + previous.getLastSpin() + "\n" +
-                        "Echte Herzen: " + previous.countHearts() + "\n\n" +
-                        deadSpinPlayer.getName() + " musste Deadspin machen: " + deadSpinPlayer.getLastSpin() + "\n" +
-                        (deadSpinPlayer.isAlive() ? "Überlebt." : "Ist raus.")
-        );
+        broadcastLiarResult(previous, deadSpinPlayer);
 
         refreshLeaderboard();
 
@@ -99,11 +122,18 @@ public class GameTableController {
     }
 
     public void onDoubleClick(ActionEvent actionEvent) {
-        if (game.isGameOver()) return;
         if (!hasSpunThisTurn) {
             setInfo("Zuerst Spin, dann Double.");
             return;
         }
+
+        if (gameServer == null) {
+            // client mode: send respin request to server
+            if (gameClient != null) gameClient.sendMessage("action-respin;" + currentPlayerName);
+            return;
+        }
+
+        if (game.isGameOver()) return;
 
         Player current = game.getCurrentPlayer();
         if (current.hasUsedRespin()) {
@@ -119,11 +149,20 @@ public class GameTableController {
     }
 
     public void onSubmitClick(ActionEvent actionEvent) {
-        if (game.isGameOver()) return;
         if (!hasSpunThisTurn) {
             setInfo("Du musst zuerst spinnen.");
             return;
         }
+
+        if (gameServer == null) {
+            // client mode: ask locally, send to server
+            Integer hearts = askInt("Submit", "Wie viele Herzen claimst du? (0-4)", 0, 4);
+            if (hearts == null) return;
+            if (gameClient != null) gameClient.sendMessage("action-submit;" + hearts);
+            return;
+        }
+
+        if (game.isGameOver()) return;
 
         Player current = game.getCurrentPlayer();
         if (!current.isAlive()) {
@@ -146,11 +185,23 @@ public class GameTableController {
     }
 
     public void onSpinClick(ActionEvent actionEvent) {
-        if (game.isGameOver()) return;
+        if (!isMyTurn) {
+            setInfo("Du bist nicht dran.");
+            return;
+        }
+
         if (hasSpunThisTurn) {
             setInfo("Du hast bereits gespinnt.");
             return;
         }
+
+        if (gameServer == null) {
+            // client mode: send spin request to server
+            if (gameClient != null) gameClient.sendMessage("action-spin;" + currentPlayerName);
+            return;
+        }
+
+        if (game.isGameOver()) return;
 
         Player current = game.getCurrentPlayer();
         if (!current.isAlive()) {
@@ -177,8 +228,8 @@ public class GameTableController {
             // Wenn GameServer bereits läuft, hole die Clients
             if (gameServer != null) {
                 List<ServerConnection> clients = gameServer.getClientList();
-                System.out.println("Clients im game: "+ clients);
-                
+                System.out.println("Clients im game: " + clients);
+
                 if (!clients.isEmpty()) {
                     for (ServerConnection client : clients) {
                         game.addPlayer(client);
@@ -201,11 +252,8 @@ public class GameTableController {
      */
     public void setGameServer(GameServer server) {
         this.gameServer = server;
-
-        // Spieler vom GameServer laden (falls verfügbar)
         setupPlayersFromGameServer();
 
-        // Set up callbacks for broadcasting updates
         game.setTurnUpdateCallback(currentPlayerName -> {
             if (gameServer != null) {
                 gameServer.broadcastTurnUpdate(currentPlayerName);
@@ -218,8 +266,41 @@ public class GameTableController {
             }
         });
 
-        // Neue Runde starten
+        gameServer.setActionHandler((client, message) ->
+                Platform.runLater(() -> handleClientAction(client, message)));
+
         startNewRound();
+
+        // Broadcast who goes first so all clients set isMyTurn correctly
+        gameServer.broadcastTurnUpdate(game.getCurrentPlayer().getName());
+    }
+
+    private void handleClientAction(ServerConnection client, String message) {
+        Player current = game.getCurrentPlayer();
+        if (!current.getName().equals(client.getUsername())) return;
+
+        if (message.startsWith("action-spin;")) {
+            List<String> spin = game.spinCurrentPlayer();
+            client.sendMessage("spin-result;" + String.join(",", spin));
+            refreshLeaderboard();
+        } else if (message.startsWith("action-respin;")) {
+            List<String> spin = game.respinCurrentPlayer();
+            client.sendMessage("spin-result;" + String.join(",", spin));
+            refreshLeaderboard();
+        } else if (message.startsWith("action-submit;")) {
+            String[] parts = message.split(";", 2);
+            try {
+                int hearts = Integer.parseInt(parts[1]);
+                game.submitCurrentPlayer(hearts);
+                refreshLeaderboard();
+                if (game.allAlivePlayersSubmitted()) {
+                    finishRound();
+                } else {
+                    prepareNextTurn();
+                }
+            } catch (NumberFormatException ignored) {
+            }
+        }
     }
 
     public void setGameClient(GameClient client) {
@@ -237,6 +318,8 @@ public class GameTableController {
                 String currentPlayer = parts[1];
                 Platform.runLater(() -> {
                     isMyTurn = currentPlayer.equals(currentPlayerName);
+                    hasSpunThisTurn = false;
+                    hasCalledThisTurn = false;
                     updateControls();
                     setInfo(currentPlayer + " ist dran.");
                 });
@@ -247,6 +330,17 @@ public class GameTableController {
                 String[] playerStates = parts[1].split("\\|");
                 Platform.runLater(() -> {
                     updateLeaderboardFromServer(playerStates);
+                });
+            }
+        } else if (message.startsWith("spin-result;")) {
+            String[] parts = message.split(";", 2);
+            if (parts.length == 2) {
+                List<String> spin = Arrays.asList(parts[1].split(","));
+                Platform.runLater(() -> {
+                    hasSpunThisTurn = true;
+                    renderSpin(spin);
+                    setInfo("Spin: " + spin);
+                    updateControls();
                 });
             }
         }
@@ -381,7 +475,7 @@ public class GameTableController {
         }
 
         leaderboardListView.getItems().setAll(lines);
-        
+
         // Broadcast game state update
         if (gameServer != null) {
             gameServer.broadcastGameState(lines);
@@ -389,28 +483,18 @@ public class GameTableController {
     }
 
     private void updateControls() {
-        if (game.isGameOver()) {
+        if (gameServer != null && game.isGameOver()) {
             disableAllGameButtons();
             return;
         }
 
         // For clients, only enable buttons if it's their turn
-        if (gameClient != null) {
-            spinButton.setDisable(!isMyTurn || hasSpunThisTurn);
-            btnCard1.setDisable(true);
-            btnCard2.setDisable(true);
-            btnCard3.setDisable(true);
-            btnCard4.setDisable(true);
-        } else {
-            // For host, use the original logic
-            Player current = game.getCurrentPlayer();
-            boolean currentAlive = current.isAlive();
-            spinButton.setDisable(!currentAlive || hasSpunThisTurn);
-            btnCard1.setDisable(true);
-            btnCard2.setDisable(true);
-            btnCard3.setDisable(true);
-            btnCard4.setDisable(true);
-        }
+        spinButton.setDisable(!isMyTurn || hasSpunThisTurn);
+        btnCard1.setDisable(true);
+        btnCard2.setDisable(true);
+        btnCard3.setDisable(true);
+        btnCard4.setDisable(true);
+
     }
 
     private void disableAllGameButtons() {

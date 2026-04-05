@@ -12,6 +12,7 @@ import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 public class GameServer implements SubscriberInterface{
     private final ServerSocket server;
@@ -22,6 +23,7 @@ public class GameServer implements SubscriberInterface{
     private int nextId = 0;
     private ServerConnection hostClient;
     private int hostId;
+    private BiConsumer<ServerConnection, String> actionHandler;
 
     public GameServer() throws IOException {
         server = new ServerSocket(12345);
@@ -88,6 +90,10 @@ public class GameServer implements SubscriberInterface{
 
     }
 
+    public void setActionHandler(BiConsumer<ServerConnection, String> handler) {
+        this.actionHandler = handler;
+    }
+
     @Override
     public void notify(Event event) {
         String message = (String) event.message();
@@ -103,6 +109,10 @@ public class GameServer implements SubscriberInterface{
                 broadcastHostId();
                 // Broadcast updated player list
                 broadcastPlayerList();
+            }
+        } else if (message.startsWith("action-")) {
+            if (actionHandler != null) {
+                actionHandler.accept(client, message);
             }
         }
     }
