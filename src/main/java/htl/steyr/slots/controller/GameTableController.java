@@ -287,6 +287,18 @@ public class GameTableController {
             List<String> spin = game.respinCurrentPlayer();
             client.sendMessage("spin-result;" + String.join(",", spin));
             refreshLeaderboard();
+        } else if (message.startsWith("action-liar;")) {
+            Player previous = game.getPreviousSubmittedAlivePlayer(current);
+            if (previous == null) return;
+            Player deadSpinPlayer = game.callPlayer(current, previous);
+            broadcastLiarResult(previous, deadSpinPlayer);
+            refreshLeaderboard();
+            if (!current.isAlive()) {
+                game.nextPlayer();
+                prepareNextTurn();
+            } else {
+                updateControls();
+            }
         } else if (message.startsWith("action-submit;")) {
             String[] parts = message.split(";", 2);
             try {
@@ -301,6 +313,18 @@ public class GameTableController {
             } catch (NumberFormatException ignored) {
             }
         }
+    }
+
+    private void broadcastLiarResult(Player previous, Player deadSpinPlayer) {
+        if (gameServer == null) return;
+        String result = "liar-result;" +
+                previous.getName() + ";" +
+                String.join(",", previous.getLastSpin()) + ";" +
+                previous.countHearts() + ";" +
+                deadSpinPlayer.getName() + ";" +
+                String.join(",", deadSpinPlayer.getLastSpin()) + ";" +
+                deadSpinPlayer.isAlive();
+        gameServer.broadcastMessage(result);
     }
 
     public void setGameClient(GameClient client) {
@@ -320,6 +344,8 @@ public class GameTableController {
                     isMyTurn = currentPlayer.equals(currentPlayerName);
                     hasSpunThisTurn = false;
                     hasCalledThisTurn = false;
+                    liarTargetName = null;
+                    liarTargetClaims = 0;
                     updateControls();
                     setInfo(currentPlayer + " ist dran.");
                 });
@@ -341,6 +367,38 @@ public class GameTableController {
                     renderSpin(spin);
                     setInfo("Spin: " + spin);
                     updateControls();
+                });
+            }
+        } else if (message.startsWith("liar-info;")) {
+            // liar-info;<prevName>;<prevClaims>
+            String[] parts = message.split(";", 3);
+            if (parts.length == 3) {
+                String targetName = parts[1];
+                int targetClaims = Integer.parseInt(parts[2]);
+                Platform.runLater(() -> {
+                    liarTargetName = targetName;
+                    liarTargetClaims = targetClaims;
+                });
+            }
+        } else if (message.startsWith("liar-result;")) {
+            // liar-result;<prevName>;<prevSpinCSV>;<realHearts>;<deadSpinName>;<deadSpinCSV>;<survived>
+            String[] parts = message.split(";", 7);
+            if (parts.length == 7) {
+                String prevName = parts[1];
+                String prevSpin = parts[2];
+                int realHearts = Integer.parseInt(parts[3]);
+                String deadName = parts[4];
+                String deadSpin = parts[5];
+                boolean survived = Boolean.parseBoolean(parts[6]);
+                Platform.runLater(() -> {
+                    hasCalledThisTurn = true;
+                    showInfo(
+                            "Liar Ergebnis",
+                            prevName + " hatte: [" + prevSpin + "]\n" +
+                                    "Echte Herzen: " + realHearts + "\n\n" +
+                                    deadName + " musste Deadspin machen: [" + deadSpin + "]\n" +
+                                    (survived ? "Überlebt." : "Ist raus.")
+                    );
                 });
             }
         }
@@ -381,6 +439,14 @@ public class GameTableController {
 
         if (!game.isGameOver()) {
             setInfo(game.getCurrentPlayer().getName() + " ist dran.");
+
+            // Tell all clients who they can call Liar on
+            if (gameServer != null) {
+                Player prev = game.getPreviousSubmittedAlivePlayer(game.getCurrentPlayer());
+                if (prev != null) {
+                    gameServer.broadcastMessage("liar-info;" + prev.getName() + ";" + prev.getClaimedHearts());
+                }
+            }
         }
     }
 

@@ -190,6 +190,14 @@ public class GameServer implements SubscriberInterface{
         }
     }
 
+    public void broadcastMessage(String message) {
+        synchronized (clients) {
+            for (ServerConnection client : clients) {
+                client.sendMessage(message);
+            }
+        }
+    }
+
     public void broadcastGameState(List<String> playerStates) {
         synchronized (clients) {
             StringBuilder stateMessage = new StringBuilder("game-state;");
