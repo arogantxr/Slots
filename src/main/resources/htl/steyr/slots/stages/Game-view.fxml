@@ -14,11 +14,11 @@
         <Button fx:id="btnCard4" layoutX="487.0" layoutY="121.0" maxHeight="80.0" maxWidth="60.0" minHeight="-Infinity" minWidth="-Infinity" prefHeight="80.0" prefWidth="60.0" text="❤" />
 
         <Button fx:id="spinButton" layoutX="354.0" layoutY="228.0" onAction="#onSpinClick" prefHeight="52.0" prefWidth="133.0" text="Spin" AnchorPane.leftAnchor="354.0" AnchorPane.rightAnchor="113.0" AnchorPane.topAnchor="228.0" />
-        <Label fx:id="labelInfoText" layoutX="451.0" layoutY="342.0" text="Q &lt; ❤ &gt; E" AnchorPane.bottomAnchor="28.0" AnchorPane.rightAnchor="57.5" />
+        <Label fx:id="labelInfoText" layoutX="435.0" layoutY="342.0" text="Q &lt; ❤ &gt; E" AnchorPane.bottomAnchor="28.0" AnchorPane.rightAnchor="73.5" />
 
-        <Button layoutX="53.0" layoutY="223.0" onAction="#onLiarClick" prefHeight="38.0" prefWidth="89.0" text="Liar" AnchorPane.bottomAnchor="139.0" AnchorPane.leftAnchor="53.0" />
-        <Button layoutX="53.0" layoutY="280.0" onAction="#onDoubleClick" prefHeight="38.0" prefWidth="89.0" text="Double" AnchorPane.bottomAnchor="82.0" AnchorPane.leftAnchor="53.0" AnchorPane.rightAnchor="458.0" />
-        <Button layoutX="53.0" layoutY="338.0" onAction="#onSubmitClick" prefHeight="38.0" prefWidth="89.0" text="Submit" AnchorPane.bottomAnchor="24.0" AnchorPane.rightAnchor="458.0" />
+        <Button layoutX="150.0" layoutY="235.0" onAction="#onLiarClick" prefHeight="38.0" prefWidth="89.0" text="Liar" AnchorPane.bottomAnchor="127.0" AnchorPane.leftAnchor="150.0" />
+        <Button layoutX="38.0" layoutY="216.0" onAction="#onDoubleClick" prefHeight="38.0" prefWidth="89.0" text="Double" AnchorPane.bottomAnchor="146.0" AnchorPane.leftAnchor="38.0" AnchorPane.rightAnchor="473.0" />
+        <Button layoutX="38.0" layoutY="273.0" onAction="#onSubmitClick" prefHeight="38.0" prefWidth="89.0" text="Submit" AnchorPane.bottomAnchor="89.0" AnchorPane.rightAnchor="473.0" />
       <Label fx:id="leaderboardLabel" layoutX="15.0" layoutY="11.0" prefHeight="19.0" prefWidth="82.0" text="Player   &lt;3" AnchorPane.leftAnchor="15.0" AnchorPane.topAnchor="11.0" />
       <ListView fx:id="leaderboardListView" layoutX="15.0" layoutY="37.0" prefHeight="152.0" prefWidth="224.0" AnchorPane.leftAnchor="15.0" AnchorPane.topAnchor="37.0" />
       <Button fx:id="tutorialButton" layoutX="565.0" layoutY="15.0" mnemonicParsing="false" prefHeight="17.0" prefWidth="11.0" text="?" AnchorPane.rightAnchor="13.0" AnchorPane.topAnchor="15.0" />

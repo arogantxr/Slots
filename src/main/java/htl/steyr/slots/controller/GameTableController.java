@@ -19,6 +19,22 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * JavaFX controller for the game-table view ({@code Game-view.fxml}).
+ *
+ * <p>This controller runs on every participant's machine.  Its behaviour differs
+ * depending on the role of the player:</p>
+ * <ul>
+ *   <li><strong>Host</strong> ({@link #gameServer} is set) — owns the authoritative
+ *       {@link Game} instance, processes all player actions locally, and broadcasts
+ *       state changes to all clients via {@link GameServer}.</li>
+ *   <li><strong>Client</strong> ({@link #gameServer} is {@code null}) — has no local
+ *       game state; instead it sends {@code action-*} messages to the host and reacts
+ *       to {@code turn-update}, {@code game-state}, {@code spin-result},
+ *       {@code liar-info}, and {@code liar-result} messages received from the
+ *       server.</li>
+ * </ul>
+ */
 public class GameTableController {
 
     @FXML
@@ -53,6 +69,10 @@ public class GameTableController {
     private int liarTargetClaims = 0;
 
 
+    /**
+     * Called automatically by the JavaFX runtime after the FXML fields have been
+     * injected.  Sets up background music and the tutorial button handler.
+     */
     @FXML
     public void initialize() {
         initBackgroundMusic();
@@ -64,6 +84,17 @@ public class GameTableController {
         ));
     }
 
+    /**
+     * Handles the Liar button.
+     *
+     * <p>The current player may call Liar on the most-recently submitted player
+     * once per turn, but only after having spun.  Clients send an
+     * {@code action-liar;} message to the host; the host processes the call
+     * directly.  The outcome is broadcast to all players as a
+     * {@code liar-result;} message.</p>
+     *
+     * @param actionEvent the button action event (unused)
+     */
     public void onLiarClick(ActionEvent actionEvent) {
         if (!hasSpunThisTurn) {
             setInfo("Du musst zuerst spinnen.");
@@ -121,6 +152,14 @@ public class GameTableController {
         }
     }
 
+    /**
+     * Handles the Double (respin) button.
+     *
+     * <p>May only be used after the initial spin and only once per turn.
+     * Clients send an {@code action-respin;} message to the host.</p>
+     *
+     * @param actionEvent the button action event (unused)
+     */
     public void onDoubleClick(ActionEvent actionEvent) {
         if (!hasSpunThisTurn) {
             setInfo("Zuerst Spin, dann Double.");
@@ -148,6 +187,15 @@ public class GameTableController {
         updateControls();
     }
 
+    /**
+     * Handles the Submit button.
+     *
+     * <p>The player must have spun before submitting.  A dialog asks how many
+     * hearts to claim (0–4).  Clients send an {@code action-submit;<hearts>}
+     * message to the host; the host updates the game state directly.</p>
+     *
+     * @param actionEvent the button action event (unused)
+     */
     public void onSubmitClick(ActionEvent actionEvent) {
         if (!hasSpunThisTurn) {
             setInfo("Du musst zuerst spinnen.");
@@ -184,6 +232,15 @@ public class GameTableController {
         }
     }
 
+    /**
+     * Handles the Spin button.
+     *
+     * <p>Only allowed once per turn and only when it is this player's turn.
+     * Clients send an {@code action-spin;} message to the host, then wait for a
+     * {@code spin-result;} response.  The host executes the spin locally.</p>
+     *
+     * @param actionEvent the button action event (unused)
+     */
     public void onSpinClick(ActionEvent actionEvent) {
         if (!isMyTurn) {
             setInfo("Du bist nicht dran.");
@@ -222,6 +279,11 @@ public class GameTableController {
     /**
      * Lädt die Spieler aus der ServerConnection-Liste vom GameServer
      */
+    /**
+     * Loads all connected {@link ServerConnection} players from the
+     * {@link GameServer} into the local {@link Game} instance.
+     * Falls back gracefully if the server is unavailable or has no clients yet.
+     */
     private void setupPlayersFromGameServer() {
         // Versuche den GameServer zu finden (muss als Singleton oder über Kontext verfügbar sein)
         try {
@@ -250,6 +312,16 @@ public class GameTableController {
     /**
      * Setzt den GameServer für diesen Controller
      */
+    /**
+     * Injects the {@link GameServer} and configures the host-side game.
+     *
+     * <p>Populates the local {@link Game} with connected players, registers
+     * turn-update and game-state broadcast callbacks, installs the client-action
+     * handler, starts the first round, and broadcasts the initial turn to all
+     * clients.</p>
+     *
+     * @param server the running {@link GameServer}; must not be {@code null}
+     */
     public void setGameServer(GameServer server) {
         this.gameServer = server;
         setupPlayersFromGameServer();
@@ -275,6 +347,18 @@ public class GameTableController {
         gameServer.broadcastTurnUpdate(game.getCurrentPlayer().getName());
     }
 
+    /**
+     * Processes an {@code action-*} message received from a non-host client.
+     *
+     * <p>Only executes the action if the sending client is actually the current
+     * player.  Handles {@code action-spin}, {@code action-respin},
+     * {@code action-liar}, and {@code action-submit}.</p>
+     *
+     * <p>Must be called on the JavaFX application thread.</p>
+     *
+     * @param client  the {@link ServerConnection} that sent the message
+     * @param message the raw protocol string (e.g. {@code "action-spin;Alice"})
+     */
     private void handleClientAction(ServerConnection client, String message) {
         Player current = game.getCurrentPlayer();
         if (!current.getName().equals(client.getUsername())) return;
@@ -315,6 +399,15 @@ public class GameTableController {
         }
     }
 
+    /**
+     * Broadcasts the outcome of a Liar call to all connected clients.
+     *
+     * <p>Wire format:
+     * {@code liar-result;<prevName>;<prevSpinCSV>;<realHearts>;<deadSpinName>;<deadSpinCSV>;<survived>}</p>
+     *
+     * @param previous       the accused player whose last spin is revealed
+     * @param deadSpinPlayer the player who had to perform the dead spin
+     */
     private void broadcastLiarResult(Player previous, Player deadSpinPlayer) {
         if (gameServer == null) return;
         String result = "liar-result;" +
@@ -327,6 +420,13 @@ public class GameTableController {
         gameServer.broadcastMessage(result);
     }
 
+    /**
+     * Injects the {@link GameClient} and registers this controller as its
+     * message handler so that server messages are dispatched to
+     * {@link #handleServerMessage(String)}.
+     *
+     * @param client the {@link GameClient} for this player; must not be {@code null}
+     */
     public void setGameClient(GameClient client) {
         this.gameClient = client;
         // Set this controller as the message handler for the client
@@ -335,6 +435,26 @@ public class GameTableController {
         }
     }
 
+    /**
+     * Dispatches an incoming server message to the appropriate UI update.
+     *
+     * <p>Handled message prefixes and their effects:</p>
+     * <ul>
+     *   <li>{@code turn-update;<name>} — sets {@link #isMyTurn}, resets per-turn
+     *       flags, updates controls.</li>
+     *   <li>{@code game-state;<states>} — refreshes the leaderboard list.</li>
+     *   <li>{@code spin-result;<symbols>} — renders the spin result and enables
+     *       submit.</li>
+     *   <li>{@code liar-info;<name>;<claims>} — stores the callable target for the
+     *       Liar dialog.</li>
+     *   <li>{@code liar-result;<...>} — shows the Liar outcome dialog.</li>
+     * </ul>
+     *
+     * <p>This method may be called from any thread; all UI updates are wrapped in
+     * {@link javafx.application.Platform#runLater}.</p>
+     *
+     * @param message the raw protocol string received from the server
+     */
     public void handleServerMessage(String message) {
         if (message.startsWith("turn-update;")) {
             String[] parts = message.split(";", 2);
@@ -620,7 +740,7 @@ public class GameTableController {
             backgroundMusicPlayer.setVolume(0.35);
             backgroundMusicPlayer.play();
 
-            // Beim Schließen der Stage sauber stoppen
+            // is stopping smoothly when window gets closed
             labelInfoText.sceneProperty().addListener((obs, oldScene, newScene) -> {
                 if (newScene != null) {
                     newScene.windowProperty().addListener((wObs, oldWindow, newWindow) -> {
@@ -631,7 +751,7 @@ public class GameTableController {
                 }
             });
         } catch (Exception ignored) {
-            // Musikfehler soll das Spiel nicht blockieren
+            // Music errors wont crash the game, just get skipped
         }
     }
 

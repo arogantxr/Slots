@@ -16,6 +16,17 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+/**
+ * Controller for the home screen of the Casino Slots application.
+ *
+ * <p>This controller manages the initial view where the player enters their name
+ * and chooses whether to host a new game session or join an existing one.
+ * Hosting creates a {@link GameServer} and automatically connects the host as the
+ * first {@link GameClient}. Joining connects an existing {@link GameClient} to a
+ * remote server identified by an IP address and port number.
+ * After a successful connection is established the controller transitions the UI
+ * to the pre-game lobby screen.</p>
+ */
 public class HomescreenController {
 
     private static final Logger LOGGER = Logger.getLogger(HomescreenController.class.getName());
@@ -44,13 +55,23 @@ public class HomescreenController {
     @FXML
     private TextField portFieldJoin;
 
+    /** The validated player name entered by the user. */
     private String playerName;
 
+    /** The {@link GameServer} instance created when the local player acts as host. */
     private static GameServer newserver;
+
+    /** The {@link GameClient} instance used by the local player (host or joining client). */
     private static GameClient newclient;
 
     /**
-     * Validiert den Spielernamen
+     * Validates the player name entered in {@code playerNameField}.
+     *
+     * <p>If the field is empty an error message is displayed and {@code false} is
+     * returned. Otherwise the trimmed name is stored in {@link #playerName}, the
+     * error label is hidden, and {@code true} is returned.</p>
+     *
+     * @return {@code true} if the player name is non-empty; {@code false} otherwise
      */
     private boolean validatePlayerName() {
         String name = playerNameField.getText().trim();
@@ -63,6 +84,13 @@ public class HomescreenController {
         return true;
     }
 
+    /**
+     * Handles the "Host Game" button click.
+     *
+     * <p>Validates the player name and, if valid, hides the main button panel and
+     * reveals the host-configuration input box where the user can enter a port
+     * number for the server.</p>
+     */
     @FXML
     private void handleHostGame() {
         if (validatePlayerName()) {
@@ -72,6 +100,13 @@ public class HomescreenController {
         }
     }
 
+    /**
+     * Handles the "Join Game" button click.
+     *
+     * <p>Validates the player name and, if valid, hides the main button panel and
+     * reveals the join-configuration input box where the user can enter the server
+     * IP address and port number.</p>
+     */
     @FXML
     private void handleJoinGame() {
         if (validatePlayerName()) {
@@ -82,6 +117,17 @@ public class HomescreenController {
         }
     }
 
+    /**
+     * Handles the "Start Server" button click in the host-configuration panel.
+     *
+     * <p>Reads and validates the port number entered by the user. If the port is
+     * valid (1024–65535) a new {@link GameServer} is created and started, a local
+     * {@link GameClient} is connected to it on {@code localhost}, and the lobby
+     * screen is shown. Any IO or number-format errors are reported to the user via
+     * the error label.</p>
+     *
+     * @param actionEvent the JavaFX {@link ActionEvent} fired by the button
+     */
     @FXML
     private void handleStartServer(ActionEvent actionEvent) {
         String portStr = portField.getText().trim();
@@ -127,6 +173,18 @@ public class HomescreenController {
     }
 
 
+    /**
+     * Handles the "Connect" button click in the join-configuration panel.
+     *
+     * <p>Validates the player name, IP address and port number. If all inputs are
+     * valid a new {@link GameClient} is created and connected to the specified
+     * server, then the lobby screen is shown. IP addresses that fail the
+     * four-octet validation or the special value {@code "localhost"} are rejected
+     * or accepted respectively. IO and number-format errors are shown via the error
+     * label.</p>
+     *
+     * @param actionEvent the JavaFX {@link ActionEvent} fired by the button
+     */
     @FXML
     private void handleConnect(ActionEvent actionEvent) {
 
@@ -169,6 +227,18 @@ public class HomescreenController {
     }
 
 
+    /**
+     * Loads and displays the lobby screen, passing the current {@link GameServer}
+     * and {@link GameClient} to the {@link LobbyController}.
+     *
+     * <p>The FXML resource {@code stages/Lobby-view.fxml} is loaded, its controller
+     * is configured with the active server and client references, a new
+     * {@link Stage} is shown, and the current home-screen stage is closed.</p>
+     *
+     * @param actionEvent the JavaFX {@link ActionEvent} whose source node provides
+     *                    a reference to the current stage so it can be closed
+     * @throws IOException if the FXML resource cannot be loaded
+     */
     // Bestehende viewLobby für Joins ohne Server
     public void viewLobby(ActionEvent actionEvent) throws IOException {
 
@@ -178,7 +248,7 @@ public class HomescreenController {
         );
 
         Scene newscene = new Scene(fxmlLoader.load());
-        
+
         // Pass the server to the LobbyController (can be null for clients)
         LobbyController lobbyController = fxmlLoader.getController();
         if (newserver != null) {
@@ -199,6 +269,12 @@ public class HomescreenController {
 
     }
 
+    /**
+     * Handles the "Cancel" button click in the host-configuration panel.
+     *
+     * <p>Hides the host-input box, shows the main button panel again, and clears
+     * any visible error message.</p>
+     */
     @FXML
     private void handleCancelHost() {
         hostInputBox.setVisible(false);
@@ -206,6 +282,12 @@ public class HomescreenController {
         hideError();
     }
 
+    /**
+     * Handles the "Cancel" button click in the join-configuration panel.
+     *
+     * <p>Hides the join-input box, shows the main button panel again, and clears
+     * any visible error message.</p>
+     */
     @FXML
     private void handleCancelJoin() {
         joinInputBox.setVisible(false);
@@ -213,6 +295,11 @@ public class HomescreenController {
         hideError();
     }
 
+    /**
+     * Handles the "Exit" button click.
+     *
+     * <p>Closes the application window that contains the player-name field.</p>
+     */
     @FXML
     private void handleExit() {
         Stage stage = (Stage) playerNameField.getScene().getWindow();
@@ -220,6 +307,18 @@ public class HomescreenController {
     }
 
 
+    /**
+     * Validates whether the given string is a valid IP address or the literal
+     * {@code "localhost"}.
+     *
+     * <p>A valid IPv4 address must consist of exactly four dot-separated segments,
+     * each being an integer in the range 0–255. The string {@code "localhost"} is
+     * always considered valid regardless of case.</p>
+     *
+     * @param ip the IP address string to validate
+     * @return {@code true} if {@code ip} is {@code "localhost"} or a valid IPv4
+     *         address; {@code false} otherwise
+     */
     private boolean isValidIP(String ip) {
         if (ip.equalsIgnoreCase("localhost")) {
             return true;
@@ -241,15 +340,30 @@ public class HomescreenController {
         return true;
     }
 
+    /**
+     * Displays an error message in the error label.
+     *
+     * @param message the error text to display
+     */
     private void showError(String message) {
         errorLabel.setText(message);
         errorLabel.setVisible(true);
     }
 
+    /**
+     * Hides the error label from the user interface.
+     */
     private void hideError() {
         errorLabel.setVisible(false);
     }
 
+    /**
+     * Returns the static {@link GameServer} instance that was created when the
+     * local player chose to host a game session.
+     *
+     * @return the current {@link GameServer}, or {@code null} if no server has
+     *         been started in this session
+     */
     public static GameServer getNewserver() {
         return newserver;
     }

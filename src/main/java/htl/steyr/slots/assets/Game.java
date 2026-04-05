@@ -8,8 +8,12 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Verwaltet die Spiellogik für das Slots-Spiel.
- * Steuert Spieler, Runden, Liar-Calls und Eliminierungen.
+ * Manages the authoritative game state for a multiplayer Slots session.
+ *
+ * <p>This class runs exclusively on the host side.  It tracks all connected
+ * players, advances the turn order, evaluates Liar calls, and notifies the
+ * host controller via callbacks whenever the current player or the overall
+ * game state changes.</p>
  */
 public class Game {
 
@@ -19,15 +23,17 @@ public class Game {
     private Consumer<List<String>> gameStateCallback;
 
     /**
-     * Fügt einen Spieler zum Spiel hinzu.
-     * @param player der hinzuzufügende Spieler
+     * Adds a player to the game.
+     *
+     * @param player the {@link ServerConnection} representing the player to add
      */
     public void addPlayer(ServerConnection player) {
         players.add(player);
     }
 
     /**
-     * Startet eine neue Runde und setzt alle lebenden Spieler zurück.
+     * Starts a new round by resetting every living player and setting the
+     * turn pointer to the first alive player.
      */
     public void startRound() {
         for (Player player : players) {
@@ -40,16 +46,20 @@ public class Game {
     }
 
     /**
-     * Führt einen Spin für den aktuellen Spieler aus.
-     * @return Liste der gespinnten Symbole
+     * Executes a regular spin for the current player.
+     *
+     * @return the list of symbols produced by the spin
      */
     public List<String> spinCurrentPlayer() {
         return getCurrentPlayer().spin();
     }
 
     /**
-     * Führt einen Respin für den aktuellen Spieler aus (falls noch nicht verwendet).
-     * @return Liste der gespinnten Symbole oder letzter Spin falls bereits verwendet
+     * Executes a respin (Double) for the current player if the respin has not
+     * already been used this round.  If it has been used the last spin result
+     * is returned unchanged.
+     *
+     * @return the new spin symbols, or the previous spin if respin was already used
      */
     public List<String> respinCurrentPlayer() {
         Player player = getCurrentPlayer();
@@ -63,8 +73,10 @@ public class Game {
     }
 
     /**
-     * Schließt den Zug des aktuellen Spielers ab und wechselt zum nächsten.
-     * @param hearts Anzahl der geclaimten Herzen (0-4)
+     * Records the current player's claimed hearts, marks them as submitted, and
+     * advances the turn to the next alive player.
+     *
+     * @param hearts the number of hearts the player claims (0–4)
      */
     public void submitCurrentPlayer(int hearts) {
         Player player = getCurrentPlayer();
@@ -74,10 +86,12 @@ public class Game {
     }
 
     /**
-     * Ruft "Liar" gegen einen anderen Spieler. Der Verlierer muss Dead-Spin machen.
-     * @param caller der aufrufende Spieler
-     * @param target der beschuldigte Spieler
-     * @return der Spieler, der den Dead-Spin machen musste
+     * Resolves a Liar call: the player whose claim was wrong must perform a
+     * dead spin.
+     *
+     * @param caller the player raising the Liar call
+     * @param target the player being accused
+     * @return the player who had to perform the dead spin
      */
     public Player callPlayer(Player caller, Player target) {
         int realHearts = target.countHearts();
@@ -94,9 +108,12 @@ public class Game {
     }
 
     /**
-     * Führt einen Dead-Spin aus. Bei keinem Herz wird der Spieler eliminiert.
-     * @param player der Spieler, der spinnen muss
-     * @return true wenn überlebt (Herz gezogen), false wenn eliminiert
+     * Performs a dead spin for the given player.  If no Heart is drawn the
+     * player is eliminated.
+     *
+     * @param player the player who must perform the dead spin
+     * @return {@code true} if the player survived (Heart drawn), {@code false}
+     *         if eliminated
      */
     public boolean deadSpin(Player player) {
         List<String> spin = player.deadSpin();
@@ -110,8 +127,10 @@ public class Game {
     }
 
     /**
-     * Prüft ob alle lebenden Spieler ihren Zug abgegeben haben.
-     * @return true wenn alle fertig sind
+     * Checks whether every living player has already submitted their claim for
+     * this round.
+     *
+     * @return {@code true} if all alive players have submitted
      */
     public boolean allAlivePlayersSubmitted() {
         for (Player player : players) {
@@ -124,9 +143,11 @@ public class Game {
     }
 
     /**
-     * Findet den vorherigen lebenden Spieler, der bereits submitted hat.
-     * @param player aktueller Spieler als Referenz
-     * @return vorheriger Spieler oder null wenn keiner gefunden
+     * Finds the most-recently submitted alive player who comes directly before
+     * the given player in turn order.
+     *
+     * @param player the reference player
+     * @return the previous submitted alive player, or {@code null} if none exists
      */
     public Player getPreviousSubmittedAlivePlayer(Player player) {
         int index = players.indexOf(player);
@@ -153,8 +174,9 @@ public class Game {
     }
 
     /**
-     * Ermittelt den Spieler mit den meisten geclaimten Herzen.
-     * @return der führende Spieler oder null wenn keine Spieler vorhanden
+     * Returns the alive player with the highest number of claimed hearts.
+     *
+     * @return the leading player, or {@code null} if there are no alive players
      */
     public Player getLeader() {
         Player leader = null;
@@ -173,8 +195,9 @@ public class Game {
     }
 
     /**
-     * Prüft ob es einen eindeutigen Leader gibt (kein Gleichstand).
-     * @return true wenn genau ein Leader existiert
+     * Returns {@code true} if there is exactly one player in first place (no tie).
+     *
+     * @return {@code true} when a unique leader exists
      */
     public boolean hasUniqueLeader() {
         Player leader = getLeader();
@@ -195,8 +218,9 @@ public class Game {
     }
 
     /**
-     * Gibt alle Spieler auf dem letzten Platz zurück.
-     * @return Liste der Letztplatzierten (kann mehrere bei Gleichstand enthalten)
+     * Returns all alive players who are currently tied for last place.
+     *
+     * @return a list of last-place players; may contain multiple entries on a tie
      */
     public List<Player> getLastPlacePlayers() {
         List<Player> lastPlayers = new ArrayList<>();
@@ -216,8 +240,10 @@ public class Game {
     }
 
     /**
-     * Prüft ob der Leader jemanden eliminieren darf (eindeutig und mehr als 5 Herzen).
-     * @return true wenn Eliminierung möglich
+     * Returns {@code true} if the leader may eliminate a last-place player this
+     * round (unique leader with more than 5 claimed hearts).
+     *
+     * @return {@code true} when an elimination is allowed
      */
     public boolean canLeaderEliminate() {
         Player leader = getLeader();
@@ -230,8 +256,9 @@ public class Game {
     }
 
     /**
-     * Eliminiert einen Spieler aus dem Spiel.
-     * @param player der zu eliminierende Spieler
+     * Eliminates the specified player from the game.
+     *
+     * @param player the player to eliminate; does nothing if {@code null}
      */
     public void eliminatePlayer(Player player) {
         if (player != null) {
@@ -240,7 +267,8 @@ public class Game {
     }
 
     /**
-     * Wechselt zum nächsten lebenden Spieler.
+     * Advances the turn pointer to the next alive player and fires the
+     * turn-update callback.
      */
     public void nextPlayer() {
         currentPlayerIndex = findNextAlivePlayer(currentPlayerIndex + 1);
@@ -248,8 +276,9 @@ public class Game {
     }
 
     /**
-     * Prüft ob das Spiel vorbei ist (maximal 1 Spieler übrig).
-     * @return true wenn Spiel beendet
+     * Returns {@code true} if one or fewer players remain alive.
+     *
+     * @return {@code true} when the game is over
      */
     public boolean isGameOver() {
         int alive = 0;
@@ -264,8 +293,9 @@ public class Game {
     }
 
     /**
-     * Gibt den Gewinner zurück (letzter lebender Spieler).
-     * @return der Gewinner oder null wenn keiner übrig
+     * Returns the last surviving player, or {@code null} if nobody is alive.
+     *
+     * @return the winner, or {@code null}
      */
     public Player getWinner() {
         for (Player player : players) {
@@ -278,24 +308,27 @@ public class Game {
     }
 
     /**
-     * Gibt den aktuellen Spieler zurück.
-     * @return der Spieler, der gerade am Zug ist
+     * Returns the player whose turn it currently is.
+     *
+     * @return the current player
      */
     public Player getCurrentPlayer() {
         return players.get(currentPlayerIndex);
     }
 
     /**
-     * Gibt die Liste aller Spieler zurück.
-     * @return Liste aller Spieler
+     * Returns the full list of players (alive and eliminated).
+     *
+     * @return all players in join order
      */
     public List<ServerConnection> getPlayers() {
         return players;
     }
 
     /**
-     * Ermittelt den Spieler mit den wenigsten Herzen (letzter Platz).
-     * @return der letztplatzierte Spieler oder null
+     * Returns the alive player with the fewest claimed hearts (last place).
+     *
+     * @return the last-place player, or {@code null} if there are no alive players
      */
     private Player getLastPlace() {
         Player lastPlace = null;
@@ -314,9 +347,11 @@ public class Game {
     }
 
     /**
-     * Findet den nächsten lebenden Spieler ab einem bestimmten Index.
-     * @param startIndex Startindex für die Suche
-     * @return Index des nächsten lebenden Spielers
+     * Searches forward from {@code startIndex} (wrapping around) for the first
+     * alive player.
+     *
+     * @param startIndex the index to start searching from
+     * @return the index of the next alive player
      */
     private int findNextAlivePlayer(int startIndex) {
         if (players.isEmpty()) {
@@ -340,24 +375,29 @@ public class Game {
     }
 
     /**
-     * Setzt den Callback für die Aktualisierung des Zuges.
-     * @param callback der zu setzende Callback
+     * Registers a callback that is invoked whenever the current player changes.
+     * The argument passed to the callback is the new current player's name.
+     *
+     * @param callback the callback to register
      */
     public void setTurnUpdateCallback(Consumer<String> callback) {
         this.turnUpdateCallback = callback;
     }
 
     /**
-     * Setzt den Callback für die Aktualisierung des Spielstands.
-     * @param callback der zu setzende Callback
+     * Registers a callback that is invoked whenever the game state should be
+     * broadcast.  The argument is a list of formatted player-state strings.
+     *
+     * @param callback the callback to register
      */
     public void setGameStateCallback(Consumer<List<String>> callback) {
         this.gameStateCallback = callback;
     }
 
     /**
-     * Benachrichtigt über eine Zug-Aktualisierung.
-     * @param update die Aktualisierung als String
+     * Fires the turn-update callback if one is registered.
+     *
+     * @param update the name of the player who is now active
      */
     private void notifyTurnUpdate(String update) {
         if (turnUpdateCallback != null) {
@@ -366,8 +406,9 @@ public class Game {
     }
 
     /**
-     * Benachrichtigt über eine Spielstand-Aktualisierung.
-     * @param gameState die Liste der aktuellen Spielstände
+     * Fires the game-state callback if one is registered.
+     *
+     * @param gameState the list of formatted player-state strings to broadcast
      */
     private void notifyGameStateUpdate(List<String> gameState) {
         if (gameStateCallback != null) {
@@ -375,4 +416,3 @@ public class Game {
         }
     }
 }
-
