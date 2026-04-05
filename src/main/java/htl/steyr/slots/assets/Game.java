@@ -1,6 +1,8 @@
 package htl.steyr.slots.assets;
 
 import htl.steyr.slots.interfaces.Player;
+import htl.steyr.slots.server.ServerConnection;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -11,7 +13,7 @@ import java.util.function.Consumer;
  */
 public class Game {
 
-    private final List<Player> players = new ArrayList<>();
+    private final List<ServerConnection> players = new ArrayList<>();
     private int currentPlayerIndex;
     private Consumer<String> turnUpdateCallback;
     private Consumer<List<String>> gameStateCallback;
@@ -20,7 +22,7 @@ public class Game {
      * Fügt einen Spieler zum Spiel hinzu.
      * @param player der hinzuzufügende Spieler
      */
-    public void addPlayer(Player player) {
+    public void addPlayer(ServerConnection player) {
         players.add(player);
     }
 
@@ -287,7 +289,7 @@ public class Game {
      * Gibt die Liste aller Spieler zurück.
      * @return Liste aller Spieler
      */
-    public List<Player> getPlayers() {
+    public List<ServerConnection> getPlayers() {
         return players;
     }
 

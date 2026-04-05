@@ -177,6 +177,7 @@ public class GameTableController {
             // Wenn GameServer bereits läuft, hole die Clients
             if (gameServer != null) {
                 List<ServerConnection> clients = gameServer.getClientList();
+                System.out.println("Clients im game: "+ clients);
                 
                 if (!clients.isEmpty()) {
                     for (ServerConnection client : clients) {

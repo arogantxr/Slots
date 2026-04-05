@@ -106,9 +106,10 @@ public class LobbyController {
     }
 
     public void leaveButtonClicked(ActionEvent actionEvent) {
-        // Schließe die Lobby-Stage
+        // Close the Lobby-Stage
         Stage stage = (Stage) ((Node) actionEvent.getSource()).getScene().getWindow();
-        // Stoppe ggf. den Updater
+        // update the playerlist
+        if(server != null) this.server.broadcastPlayerList();
         stage.close();
     }
 }
