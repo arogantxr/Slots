@@ -50,6 +50,7 @@ public class ServerConnection implements Player, PublisherInterface {
     private boolean usedRespin = false;
     private boolean submitted = false;
     private int claimedHearts = 0;
+    private int totalHearts = 0;
     private List<String> lastSpin = new ArrayList<>();
 
     private final List<SubscriberInterface> subscribers = new ArrayList<>();
@@ -360,5 +361,15 @@ public class ServerConnection implements Player, PublisherInterface {
     @Override
     public List<String> getLastSpin() {
         return lastSpin;
+    }
+
+    @Override
+    public int getTotalHearts() {
+        return totalHearts;
+    }
+
+    @Override
+    public void addTotalHearts(int hearts) {
+        totalHearts += hearts;
     }
 }
