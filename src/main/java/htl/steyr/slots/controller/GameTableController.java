@@ -57,6 +57,7 @@ public class GameTableController {
     public Button tutorialButton;
 
     private final Game game = new Game();
+    public Button doubleButton;
     private GameServer gameServer;
     private GameClient gameClient;
     private String currentPlayerName;
@@ -656,7 +657,7 @@ public class GameTableController {
         for (Player p : game.getPlayers()) {
             String marker = (current == p) ? " ◀" : "";
             String alive = p.isAlive() ? "alive" : "out";
-            String claim = p.hasSubmitted() ? String.valueOf(p.getClaimedHearts()) : "-";
+            String claim = String.valueOf(p.getClaimedHearts());
             lines.add(p.getName() + " | " + alive + " | claim: " + claim + marker);
         }
 
@@ -676,10 +677,7 @@ public class GameTableController {
 
         // For clients, only enable buttons if it's their turn
         spinButton.setDisable(!isMyTurn || hasSpunThisTurn);
-        btnCard1.setDisable(true);
-        btnCard2.setDisable(true);
-        btnCard3.setDisable(true);
-        btnCard4.setDisable(true);
+        doubleButton.setDisable(!isMyTurn && !spinButton.isDisable());
 
     }
 

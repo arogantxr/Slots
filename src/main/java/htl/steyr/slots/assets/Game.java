@@ -236,7 +236,22 @@ public class Game {
             }
         }
 
+        if(lastPlayers.size() == 1) {
+            endRound();
+        }
+
         return lastPlayers;
+    }
+
+    public void endRound() {
+        List<String> gameState = new ArrayList<>();
+
+        for (Player player : players) {
+            String state = player.getName() + ": " + (player.isAlive() ? player.getClaimedHearts() + " hearts" : "eliminated");
+            gameState.add(state);
+        }
+
+        notifyGameStateUpdate(gameState);
     }
 
     /**
