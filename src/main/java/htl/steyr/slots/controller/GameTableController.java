@@ -48,6 +48,8 @@ public class GameTableController {
     @FXML
     public Button spinButton;
     @FXML
+    public Button voteButton;
+    @FXML
     public Label labelInfoText;
     @FXML
     public Label leaderboardLabel;
@@ -63,10 +65,8 @@ public class GameTableController {
     private MediaPlayer backgroundMusicPlayer;
 
     private boolean hasSpunThisTurn = false;
-    private boolean hasCalledThisTurn = false;
     private boolean isMyTurn = false;
-    private String liarTargetName = null;
-    private int liarTargetClaims = 0;
+    private int myTotalHearts = 0;
 
 
     /**
@@ -79,77 +79,59 @@ public class GameTableController {
 
         tutorialButton.setOnAction(e -> showInfo(
                 "Regeln",
-                "Ablauf:\n1) Spin\n2) Optional Double (Respin)\n3) Optional Liar\n4) Submit (Claim 0-4 Herzen)\n\n" +
-                        "Rundenende: Eindeutiger Leader mit >5 Herzen darf letzten Platz eliminieren."
+                "Ablauf:\n1) Spin\n2) Optional Double (Respin)\n3) Submit (Claim 0-4 Herzen)\n4) Alle stimmen ab ob gelogen wurde\n\n" +
+                        "Herzen sammeln sich über Runden an.\n" +
+                        "Rundenende: Spieler mit >= 5 Herzen können 5 Herzen ausgeben um abzustimmen, wer zum Deathspin muss."
         ));
     }
 
     /**
-     * Handles the Liar button.
-     *
-     * <p>The current player may call Liar on the most-recently submitted player
-     * once per turn, but only after having spun.  Clients send an
-     * {@code action-liar;} message to the host; the host processes the call
-     * directly.  The outcome is broadcast to all players as a
-     * {@code liar-result;} message.</p>
-     *
-     * @param actionEvent the button action event (unused)
+     * Handles the Vote button. Spends 5 hearts to send another player to a deathspin.
+     * Only available during the player's turn after spinning, if they have >= 5 total hearts.
      */
-    public void onLiarClick(ActionEvent actionEvent) {
-        if (!hasSpunThisTurn) {
-            setInfo("Du musst zuerst spinnen.");
-            return;
-        }
-        if (hasCalledThisTurn) {
-            setInfo("Liar wurde in diesem Zug bereits verwendet.");
-            return;
-        }
+    public void onVoteClick(ActionEvent actionEvent) {
+        if (!isMyTurn || !hasSpunThisTurn) return;
 
         if (gameServer == null) {
-            // client mode: use liar target info sent by server
-            if (liarTargetName == null) {
-                setInfo("Kein vorheriger abgegebener Spieler zum Callen.");
-                return;
-            }
-            boolean confirm = confirm(
-                    "Liar Call",
-                    "Willst du " + liarTargetName + " callen?\nClaim: " + liarTargetClaims
-            );
-            if (!confirm) return;
-            if (gameClient != null) gameClient.sendMessage("action-liar;" + currentPlayerName);
-            hasCalledThisTurn = true;
+            // client mode
+            if (gameClient != null) gameClient.sendMessage("action-vote;" + currentPlayerName);
             return;
         }
 
         if (game.isGameOver()) return;
 
         Player current = game.getCurrentPlayer();
-        Player previous = game.getPreviousSubmittedAlivePlayer(current);
-
-        if (previous == null) {
-            setInfo("Kein vorheriger abgegebener Spieler zum Callen.");
+        if (current.getTotalHearts() < 5) {
+            setInfo("Nicht genug Herzen (mind. 5 benötigt).");
             return;
         }
 
-        boolean confirm = confirm(
-                "Liar Call",
-                "Willst du " + previous.getName() + " callen?\nClaim: " + previous.getClaimedHearts()
-        );
-        if (!confirm) return;
+        List<Player> targets = new ArrayList<>();
+        for (Player t : game.getPlayers()) {
+            if (t.isAlive() && t != current) targets.add(t);
+        }
+        if (targets.isEmpty()) return;
 
-        Player deadSpinPlayer = game.callPlayer(current, previous);
-        hasCalledThisTurn = true;
+        Player target = chooseDeathspinTarget(targets, current);
+        if (target == null) return;
 
-        broadcastLiarResult(previous, deadSpinPlayer);
+        current.addTotalHearts(-5);
+        boolean survived = game.deadSpin(target);
+        showInfo("Deathspin",
+                current.getName() + " schickt " + target.getName() + " zum Deathspin. (-5 Herzen)\n" +
+                "Ergebnis: " + String.join(", ", target.getLastSpin()) + "\n" +
+                (survived ? target.getName() + " hat überlebt!" : target.getName() + " ist raus!"));
 
         refreshLeaderboard();
 
-        if (!current.isAlive()) {
-            game.nextPlayer();
-            prepareNextTurn();
-        } else {
-            updateControls();
+        if (game.isGameOver()) {
+            Player winner = game.getWinner();
+            setInfo("GEWINNER: " + (winner != null ? winner.getName() : "Niemand"));
+            disableAllGameButtons();
+            return;
         }
+
+        updateControls();
     }
 
     /**
@@ -223,10 +205,19 @@ public class GameTableController {
         if (hearts == null) return;
 
         game.submitCurrentPlayer(hearts);
+        conductLiarVote(current, hearts);
         refreshLeaderboard();
 
+        if (game.isGameOver()) {
+            Player winner = game.getWinner();
+            setInfo("GEWINNER: " + (winner != null ? winner.getName() : "Niemand"));
+            disableAllGameButtons();
+            return;
+        }
+
+        game.nextPlayer();
         if (game.allAlivePlayersSubmitted()) {
-            finishRound();
+            startNewRound();
         } else {
             prepareNextTurn();
         }
@@ -274,6 +265,50 @@ public class GameTableController {
         setInfo(current.getName() + " ist dran. Spin: " + spin);
         refreshLeaderboard();
         updateControls();
+    }
+
+    /**
+     * Conducts a liar vote after a player submits. Every other alive player
+     * votes on whether the submitter lied. If the submitter lied, they do a
+     * deathspin. If they didn't, each accuser does a deathspin.
+     */
+    private void conductLiarVote(Player submitter, int claimedHearts) {
+        List<Player> accusers = new ArrayList<>();
+
+        for (Player voter : game.getPlayers()) {
+            if (!voter.isAlive() || voter == submitter) continue;
+
+            boolean votesLiar = confirm("Liar Abstimmung",
+                    voter.getName() + ": Hat " + submitter.getName() + " gelogen? (Claim: " + claimedHearts + " Herzen)");
+            if (votesLiar) {
+                accusers.add(voter);
+            }
+        }
+
+        if (accusers.isEmpty()) return;
+
+        int actualHearts = submitter.countHearts();
+        boolean didLie = claimedHearts > actualHearts;
+
+        if (didLie) {
+            boolean survived = game.deadSpin(submitter);
+            showInfo("Liar Ergebnis",
+                    submitter.getName() + " hat gelogen! (Claim: " + claimedHearts + ", Tatsächlich: " + actualHearts + ")\n" +
+                    "Deathspin: " + String.join(", ", submitter.getLastSpin()) + "\n" +
+                    (survived ? "Überlebt!" : submitter.getName() + " ist raus!"));
+        } else {
+            StringBuilder result = new StringBuilder();
+            result.append(submitter.getName() + " hat NICHT gelogen! (Claim: " + claimedHearts + ", Tatsächlich: " + actualHearts + ")\n\n");
+
+            for (Player accuser : accusers) {
+                if (!accuser.isAlive() || game.isGameOver()) continue;
+                boolean survived = game.deadSpin(accuser);
+                result.append(accuser.getName() + " Deathspin: " + String.join(", ", accuser.getLastSpin()) + " - ");
+                result.append(survived ? "Überlebt!\n" : "Ist raus!\n");
+            }
+
+            showInfo("Liar Ergebnis", result.toString());
+        }
     }
 
     /**
@@ -371,26 +406,47 @@ public class GameTableController {
             List<String> spin = game.respinCurrentPlayer();
             client.sendMessage("spin-result;" + String.join(",", spin));
             refreshLeaderboard();
-        } else if (message.startsWith("action-liar;")) {
-            Player previous = game.getPreviousSubmittedAlivePlayer(current);
-            if (previous == null) return;
-            Player deadSpinPlayer = game.callPlayer(current, previous);
-            broadcastLiarResult(previous, deadSpinPlayer);
+        } else if (message.startsWith("action-vote;")) {
+            if (current.getTotalHearts() < 5) return;
+            List<Player> targets = new ArrayList<>();
+            for (Player t : game.getPlayers()) {
+                if (t.isAlive() && t != current) targets.add(t);
+            }
+            if (targets.isEmpty()) return;
+            Player target = chooseDeathspinTarget(targets, current);
+            if (target == null) return;
+            current.addTotalHearts(-5);
+            boolean survived = game.deadSpin(target);
+            String voteResult = "vote-result;" + current.getName() + ";" + target.getName() + ";" +
+                    String.join(",", target.getLastSpin()) + ";" + survived + ";" + current.getTotalHearts();
+            gameServer.broadcastMessage(voteResult);
             refreshLeaderboard();
-            if (!current.isAlive()) {
-                game.nextPlayer();
-                prepareNextTurn();
+            if (game.isGameOver()) {
+                Player winner = game.getWinner();
+                setInfo("GEWINNER: " + (winner != null ? winner.getName() : "Niemand"));
+                disableAllGameButtons();
             } else {
-                updateControls();
+                // Send updated hearts to the voter client
+                client.sendMessage("your-hearts;" + current.getTotalHearts());
             }
         } else if (message.startsWith("action-submit;")) {
             String[] parts = message.split(";", 2);
             try {
                 int hearts = Integer.parseInt(parts[1]);
                 game.submitCurrentPlayer(hearts);
+                conductLiarVote(current, hearts);
                 refreshLeaderboard();
+
+                if (game.isGameOver()) {
+                    Player winner = game.getWinner();
+                    setInfo("GEWINNER: " + (winner != null ? winner.getName() : "Niemand"));
+                    disableAllGameButtons();
+                    return;
+                }
+
+                game.nextPlayer();
                 if (game.allAlivePlayersSubmitted()) {
-                    finishRound();
+                    startNewRound();
                 } else {
                     prepareNextTurn();
                 }
@@ -463,9 +519,7 @@ public class GameTableController {
                 Platform.runLater(() -> {
                     isMyTurn = currentPlayer.equals(currentPlayerName);
                     hasSpunThisTurn = false;
-                    hasCalledThisTurn = false;
-                    liarTargetName = null;
-                    liarTargetClaims = 0;
+                    myTotalHearts = 0;
                     updateControls();
                     setInfo(currentPlayer + " ist dran.");
                 });
@@ -489,15 +543,28 @@ public class GameTableController {
                     updateControls();
                 });
             }
-        } else if (message.startsWith("liar-info;")) {
-            // liar-info;<prevName>;<prevClaims>
-            String[] parts = message.split(";", 3);
-            if (parts.length == 3) {
-                String targetName = parts[1];
-                int targetClaims = Integer.parseInt(parts[2]);
+        } else if (message.startsWith("your-hearts;")) {
+            String[] parts = message.split(";", 2);
+            if (parts.length == 2) {
+                int hearts = Integer.parseInt(parts[1]);
                 Platform.runLater(() -> {
-                    liarTargetName = targetName;
-                    liarTargetClaims = targetClaims;
+                    myTotalHearts = hearts;
+                    updateControls();
+                });
+            }
+        } else if (message.startsWith("vote-result;")) {
+            // vote-result;<voterName>;<targetName>;<spinCSV>;<survived>;<voterHearts>
+            String[] parts = message.split(";", 6);
+            if (parts.length == 6) {
+                String voterName = parts[1];
+                String targetName = parts[2];
+                String spinResult = parts[3];
+                boolean survived = Boolean.parseBoolean(parts[4]);
+                Platform.runLater(() -> {
+                    showInfo("Deathspin",
+                            voterName + " schickt " + targetName + " zum Deathspin. (-5 Herzen)\n" +
+                            "Ergebnis: [" + spinResult + "]\n" +
+                            (survived ? targetName + " hat überlebt!" : targetName + " ist raus!"));
                 });
             }
         } else if (message.startsWith("liar-result;")) {
@@ -511,7 +578,6 @@ public class GameTableController {
                 String deadSpin = parts[5];
                 boolean survived = Boolean.parseBoolean(parts[6]);
                 Platform.runLater(() -> {
-                    hasCalledThisTurn = true;
                     showInfo(
                             "Liar Ergebnis",
                             prevName + " hatte: [" + prevSpin + "]\n" +
@@ -552,64 +618,28 @@ public class GameTableController {
 
     private void prepareNextTurn() {
         hasSpunThisTurn = false;
-        hasCalledThisTurn = false;
         clearCards();
         refreshLeaderboard();
         updateControls();
 
         if (!game.isGameOver()) {
-            setInfo(game.getCurrentPlayer().getName() + " ist dran.");
-
-            // Tell all clients who they can call Liar on
+            Player current = game.getCurrentPlayer();
+            setInfo(current.getName() + " ist dran.");
+            // Tell the current client their total hearts so they can enable the Vote button
             if (gameServer != null) {
-                Player prev = game.getPreviousSubmittedAlivePlayer(game.getCurrentPlayer());
-                if (prev != null) {
-                    gameServer.broadcastMessage("liar-info;" + prev.getName() + ";" + prev.getClaimedHearts());
-                }
+                current.sendMessage("your-hearts;" + current.getTotalHearts());
             }
         }
     }
 
-    private void finishRound() {
-        if (game.canLeaderEliminate()) {
-            Player leader = game.getLeader();
-            List<Player> lastPlayers = game.getLastPlacePlayers();
-
-            if (leader != null) {
-                if (lastPlayers.size() == 1) {
-                    Player eliminated = lastPlayers.get(0);
-                    game.eliminatePlayer(eliminated);
-                    showInfo("Eliminierung", leader.getName() + " eliminiert " + eliminated.getName() + ".");
-                } else if (!lastPlayers.isEmpty()) {
-                    Player choice = choosePlayer(lastPlayers, leader);
-                    if (choice != null) {
-                        game.eliminatePlayer(choice);
-                        showInfo("Eliminierung", leader.getName() + " eliminiert " + choice.getName() + ".");
-                    }
-                }
-            }
-        }
-
-        refreshLeaderboard();
-
-        if (game.isGameOver()) {
-            Player winner = game.getWinner();
-            setInfo("GEWINNER: " + (winner != null ? winner.getName() : "Niemand"));
-            disableAllGameButtons();
-            return;
-        }
-
-        startNewRound();
-    }
-
-    private Player choosePlayer(List<Player> candidates, Player leader) {
+    private Player chooseDeathspinTarget(List<Player> candidates, Player voter) {
         List<String> names = new ArrayList<>();
         for (Player p : candidates) names.add(p.getName());
 
         ChoiceDialog<String> dialog = new ChoiceDialog<>(names.get(0), names);
-        dialog.setTitle("Eliminierung");
-        dialog.setHeaderText(leader.getName() + " ist eindeutiger Leader (>5).");
-        dialog.setContentText("Wen eliminieren?");
+        dialog.setTitle("Deathspin Abstimmung");
+        dialog.setHeaderText(voter.getName() + " stimmt ab (kostet 5 Herzen).");
+        dialog.setContentText("Wen zum Deathspin schicken?");
 
         Optional<String> result = dialog.showAndWait();
         if (!result.isPresent()) return null;
@@ -657,7 +687,7 @@ public class GameTableController {
             String marker = (current == p) ? " ◀" : "";
             String alive = p.isAlive() ? "alive" : "out";
             String claim = p.hasSubmitted() ? String.valueOf(p.getClaimedHearts()) : "-";
-            lines.add(p.getName() + " | " + alive + " | claim: " + claim + marker);
+            lines.add(p.getName() + " | " + alive + " | claim: " + claim + " | total: " + p.getTotalHearts() + marker);
         }
 
         leaderboardListView.getItems().setAll(lines);
@@ -674,17 +704,28 @@ public class GameTableController {
             return;
         }
 
-        // For clients, only enable buttons if it's their turn
         spinButton.setDisable(!isMyTurn || hasSpunThisTurn);
+
+        // Vote enabled when it's your turn, you've spun, and you have >= 5 hearts
+        boolean canVote = isMyTurn && hasSpunThisTurn;
+        if (canVote) {
+            if (gameServer != null && !game.getPlayers().isEmpty()) {
+                canVote = game.getCurrentPlayer().getTotalHearts() >= 5;
+            } else {
+                canVote = myTotalHearts >= 5;
+            }
+        }
+        voteButton.setDisable(!canVote);
+
         btnCard1.setDisable(true);
         btnCard2.setDisable(true);
         btnCard3.setDisable(true);
         btnCard4.setDisable(true);
-
     }
 
     private void disableAllGameButtons() {
         spinButton.setDisable(true);
+        voteButton.setDisable(true);
     }
 
     private Integer askInt(String title, String text, int min, int max) {

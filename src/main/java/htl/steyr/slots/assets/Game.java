@@ -73,16 +73,17 @@ public class Game {
     }
 
     /**
-     * Records the current player's claimed hearts, marks them as submitted, and
-     * advances the turn to the next alive player.
+     * Records the current player's claimed hearts and marks them as submitted.
+     * Does NOT advance the turn — the controller must call {@link #nextPlayer()}
+     * after resolving the liar vote.
      *
      * @param hearts the number of hearts the player claims (0–4)
      */
     public void submitCurrentPlayer(int hearts) {
         Player player = getCurrentPlayer();
         player.setClaimedHearts(hearts);
+        player.addTotalHearts(hearts);
         player.setSubmitted(true);
-        nextPlayer();
     }
 
     /**
@@ -240,19 +241,21 @@ public class Game {
     }
 
     /**
-     * Returns {@code true} if the leader may eliminate a last-place player this
-     * round (unique leader with more than 5 claimed hearts).
+     * Returns all alive players who have accumulated more than 5 total hearts
+     * across all rounds and thus may choose another player for a death spin.
      *
-     * @return {@code true} when an elimination is allowed
+     * @return list of eligible players (may be empty)
      */
-    public boolean canLeaderEliminate() {
-        Player leader = getLeader();
+    public List<Player> getDeathspinEligiblePlayers() {
+        List<Player> eligible = new ArrayList<>();
 
-        if (leader == null) {
-            return false;
+        for (Player player : players) {
+            if (player.isAlive() && player.getTotalHearts() >= 5) {
+                eligible.add(player);
+            }
         }
 
-        return hasUniqueLeader() && leader.getClaimedHearts() > 5;
+        return eligible;
     }
 
     /**

@@ -136,4 +136,18 @@ public interface Player {
      * @return the last spin result; empty if the player has not yet spun
      */
     List<String> getLastSpin();
+
+    /**
+     * Returns the total number of hearts accumulated across all rounds.
+     *
+     * @return the total heart count
+     */
+    int getTotalHearts();
+
+    /**
+     * Adds hearts to the player's running total.
+     *
+     * @param hearts the number of hearts to add
+     */
+    void addTotalHearts(int hearts);
 }
